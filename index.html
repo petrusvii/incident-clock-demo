@@ -1060,7 +1060,8 @@ function renderBar(R){
   $('#barName').textContent=val('name')||'New incident';
   const aw=new Date(S.aware);$('#barAware').textContent=isNaN(aw)?'Set the time you became aware':'Became aware '+fmt(aw);
   const p=pending(R),nx=$('#barNext');
-  $('#navBadge').textContent=p.length?p.length+' open':'';$('#navBadge').hidden=!p.length;
+  const nb=$('#navBadge');nb.textContent=p.length?p.length+(p.length>1?' deadlines':' deadline'):'';nb.hidden=!p.length;
+  nb.title=p.length?`${p.length} report${p.length>1?'s':''} with a deadline still to send for this incident`:'';
   if(!p.length){nx.disabled=true;nx.dataset.open='';nx.innerHTML=`<span class="bn-lab">Next deadline</span><span class="bn-what">No open deadlines</span>`;return}
   const n=p[0];nx.disabled=false;nx.dataset.open=n.id;
   nx.innerHTML=`<span class="bn-lab">Next deadline</span><span class="count bn-count" data-due="${n.at.getTime()}" data-id="${n.id}">--</span><span class="bn-what">${lawTag(n.law)} ${esc(n.l)}</span>`;
