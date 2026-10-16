@@ -1462,6 +1462,14 @@ const FORM_URL='https://eservices.traficom.fi/ContactForms/form/NIS2-Ilmoitus?la
 const FORM_URL_EN='https://eservices.traficom.fi/ContactForms/form/NIS2-Ilmoitus?langid=en';
 const FORMS={'nis2-ew':'Teen ensi-ilmoituksen','nis2-n':'Teen jatkoilmoituksen','nis2-i':'Annan väliraportin','nis2-p':'Annan väliraportin','nis2-f':'Annan loppuraportin'};
 const FORMS_EN={'nis2-ew':'Make a first-time notification','nis2-n':'Make a follow-up notification','nis2-i':'I will provide an interim report','nis2-p':'I will provide an interim report','nis2-f':'I will provide a final report'};
+/* GDPR: the Data Protection Ombudsman's data breach form (Turvalomake, Valtori). One URL; the page has its own Finnish/Swedish/English switch. */
+const GDPR_URL='https://turvaviesti.om.fi/ilmoitus-tietoturvaloukkauksesta';
+FORMS['gdpr-a']=FORMS_EN['gdpr-a']='Complete notification, or Preliminary notification if you do not know everything yet';
+FORMS['gdpr-f']=FORMS_EN['gdpr-f']='Supplement to a previous notification';
+/* Per form: where it opens, the extra language link (if any) and the line under "Send to". */
+const FORMLINK=id=>lawOf(id)==='gdpr'
+  ?{url:GDPR_URL,alt:null,via:'through the official data breach form (Finnish, Swedish or English). After sending, save the PDF it offers.'}
+  :{url:FORM_URL_EN,alt:FORM_URL,via:'through the official NIS2 form. Confirm with Fimea that this is their channel.'};
 /* Sent time edited after "Mark as sent": the original click time is kept. */
 const editedAt=id=>S.doneClick&&S.doneClick[id]&&S.done[id]&&S.doneClick[id]!==S.done[id]?S.doneClick[id]:null;
 function stepStatus(id){const sent=S.done[id],skip=S.skip[id],miss=missing(id);
@@ -1493,7 +1501,7 @@ function stepHtml(d){
   const sentBox=sent?`<div class="sentbox"><div class="field"><label for="sent_at">${rec?'Recorded at':fm?'Time reported':'Actual time sent'}</label><input type="datetime-local" id="sent_at" value="${toInput(new Date(sent))}">${ed?`<span class="edited">Time edited, marked at ${esc(fmtLog(new Date(ed)))}</span>`:''}</div>${rec?'':`<div class="field"><label for="sent_ref">${fm?'Confirmation or reference number':'Reference or receipt number'}</label><input id="sent_ref" value="${esc(S.ref[id]||'')}" placeholder="${fm?'From the Vahvistus (confirmation) page':'For example the receipt or case number you got back'}"></div>`}${snap?`<details class="more" style="grid-column:1/-1;margin-top:0"><summary>${ic('file','sm')}Show the ${fm?'answers as reported':'text as '+(rec?'recorded':'sent')}</summary><pre class="draft">${esc(snap)}</pre></details>`:''}</div>`:'';
   const skipForm=d.opt&&!sent&&!skip?`<form class="skipform" id="skipForm" autocomplete="off" hidden><div class="field"><label for="skip_reason">Why is it not needed?</label><input id="skip_reason" placeholder="Short reason, for example: authority has not asked"></div><button type="submit" class="btn primary">Save</button><button type="button" class="btn" id="skipCancel">Cancel</button></form>`:'';
   if(fm){
-    const fdest=`Send to <b>${esc(L.to)}</b> through the official NIS2 form. Confirm with Fimea that this is their channel.`;
+    const FL2=FORMLINK(id),fdest=`Send to <b>${esc(L.to)}</b> ${FL2.via}`;
     /* Official form step: open the form, copy the answers, mark as done with the confirmation number. */
     const doneForm=!sent&&!skip?`<form class="doneform" id="doneForm" autocomplete="off" hidden><div class="field"><label for="done_at">Time reported</label><input type="datetime-local" id="done_at"></div><div class="field"><label for="done_ref">Confirmation number (optional)</label><input id="done_ref" placeholder="From the form's confirmation page"></div><button type="submit" class="btn primary">Save</button><button type="button" class="btn" id="doneCancel">Cancel</button></form>`:'';
     const facts=[];if(skip)facts.push(`<button class="btn" id="undoSkip" type="button">${ic('reload','sm')}Undo not needed</button>`);
@@ -1502,8 +1510,8 @@ function stepHtml(d){
     return `<div class="st-head"><h3>${esc(T.title)}</h3>${ib('d-'+id,L.short+' '+T.title)}</div>
     <p class="st-to">${ic('send','sm')}<span>${fdest}${due?' · '+esc(due):''}</span></p>
     ${sentBox}
-    <div class="formcta"><span class="actions"><a class="btn${sent?'':' primary'}" href="${FORM_URL_EN}" target="_blank" rel="noopener" lang="en">${ic('ext','sm')}Open the official form</a><a class="btn" href="${FORM_URL}" target="_blank" rel="noopener" lang="fi">Suomeksi</a></span><p class="hint">In the form, choose <b>${esc(FORMS_EN[id])}</b> (<span lang="fi">${esc(fm)}</span>). The form asks everything it needs. When you have sent it, mark the step as done here.</p></div>
-    ${ended}
+    <div class="formcta"><span class="actions"><a class="btn${sent?'':' primary'}" href="${FL2.url}" target="_blank" rel="noopener">${ic('ext','sm')}Open the official form</a>${FL2.alt?`<a class="btn" href="${FL2.alt}" target="_blank" rel="noopener" lang="fi">Suomeksi</a>`:''}</span><p class="hint">In the form, choose <b>${esc(FORMS_EN[id])}</b>${fm!==FORMS_EN[id]?` (<span lang="fi">${esc(fm)}</span>)`:''}. The form asks everything it needs. When you have sent it, mark the step as done here.</p></div>
+    ${awField}${ended}
     ${skipForm}${doneForm}
     <div class="st-act"><span class="status" id="draftStatus" aria-live="polite">${esc(stepStatus(id))}</span><span class="actions">${facts.join('')}</span></div>`;
   }
