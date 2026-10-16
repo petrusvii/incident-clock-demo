@@ -391,6 +391,15 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
 .quiet:hover{color:var(--crit)}
 .filter button:disabled{opacity:.5;cursor:not-allowed}
 @media (max-width:520px){.icard{grid-template-columns:minmax(0,1fr)}.ic-side{align-items:flex-start;text-align:left}.ic-what{justify-content:flex-start}}
+.qs>.whyf{margin-top:-10px}
+.whyf{max-width:560px;border-left:3px solid var(--warn);padding-left:10px}
+.whyf input{background:var(--surface)}
+.warnmsg{color:var(--warn);font-weight:600;margin:0}
+.warnmsg:empty{display:none}
+.why.warn{color:var(--warn)}
+.fp{font-family:var(--mono);font-size:12px;word-break:break-all;color:var(--fg)}
+.lc-int{--lc:var(--muted)}
+.edited{font-size:12px;color:var(--warn)}
 @media (prefers-reduced-motion:no-preference){
   .drawer{animation:slide .18s ease-out}
   @keyframes slide{from{transform:translateX(24px)}to{transform:none}}
@@ -545,6 +554,13 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
             <ul class="olist" id="closeOpen"></ul>
             <p class="hint">Also record the incident in your own incident register, even when nothing was reported.</p>
           </section>
+          <section class="cblock" aria-labelledby="afterH">
+            <h3 id="afterH">After the incident<button type="button" class="ib" data-help="sec_after" aria-label="Help: after the incident"><svg class="i"><use href="#i-info"/></svg></button></h3>
+            <p class="hint">Internal follow-up. It shows in the compliance summary as ISO 27001 A.5.27 and ISO 13485 8.5.2.</p>
+            <div class="field"><label for="c_cause">Root cause</label><textarea id="c_cause" data-k="cause" rows="2"></textarea></div>
+            <div class="field"><label for="c_capa">Corrective and preventive actions, with owner and due date</label><textarea id="c_capa" data-k="capa" rows="3" placeholder="For example: block local CRM exports (owner IT Manager, due 2026-11-30)"></textarea></div>
+            <div class="field"><label for="c_lessons">Lessons learned</label><textarea id="c_lessons" data-k="lessons" rows="2"></textarea></div>
+          </section>
           <section class="cblock" aria-labelledby="compH">
             <h3 id="compH">Compliance summary<button type="button" class="ib" data-help="sec_comp" aria-label="Help: why a compliance summary"><svg class="i"><use href="#i-info"/></svg></button></h3>
             <p class="hint">One page for the auditor: every legal duty for this incident, what you did and when. Laws that did not apply are listed too, with the reason.</p>
@@ -556,6 +572,7 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
               <button class="btn primary" id="signBtn" type="button"><svg class="i sm"><use href="#i-check"/></svg><span>Sign off</span></button>
             </div>
             <p class="hint" id="signStatus" aria-live="polite"></p>
+            <p class="hint">A sign-off per incident supports, but does not replace, management approval of the incident process (NIS2 Art. 20(1)).</p>
             <div class="navrow"><span class="status" id="compStatus" aria-live="polite"></span><button class="btn" id="copyComp" type="button"><svg class="i sm"><use href="#i-copy"/></svg>Copy summary</button></div>
             <pre class="draft" id="compOut" hidden></pre>
           </section>
@@ -570,6 +587,7 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
             <h3 id="dataH">Incident data</h3>
             <p class="hint">Copy everything about this incident (facts, answers, sent times, log) as JSON, for example to keep it in your own records.</p>
             <div class="navrow"><span class="status" id="jsonStatus" aria-live="polite"></span><button class="btn" id="copyJson" type="button"><svg class="i sm"><use href="#i-copy"/></svg>Copy incident data (JSON)</button></div>
+            <p class="hint" id="fpWrap" hidden>Fingerprint (SHA-256) of this copy: <code class="fp" id="fp"></code><br>Save this fingerprint with your copy. Any later change gives a different fingerprint.</p>
             <pre class="draft" id="jsonOut" hidden></pre>
           </section>
           <section class="cblock" aria-labelledby="closeIncH">
@@ -644,7 +662,7 @@ const LAWS={
  mdr:{short:'MDR',name:'Medical Device Regulation',id:'Regulation (EU) 2017/745',icon:'pulse',url:EUR('32017R0745'),
    full:'Medical devices: vigilance and post-market surveillance',
    facts:[['Applies from','2021-05-26'],['Reports through','EUDAMED vigilance module or national MIR form']],
-   to:'Fimea, as a Manufacturer Incident Report (MIR)'},
+   to:'The competent authority of the Member State where the incident occurred (Fimea for Finland), through EUDAMED or the national MIR form'},
  cra:{short:'CRA',name:'Cyber Resilience Act',id:'Regulation (EU) 2024/2847',icon:'chip',url:EUR('32024R2847'),
    full:'Cybersecurity requirements for products with digital elements',
    facts:[['In force','2024-12-10'],['Reporting (Art. 14) from','2026-09-11'],['Fully applies from','2027-12-11']],
@@ -717,7 +735,7 @@ Ensi-ilmoitus on tehtävä 24 tunnin kuluessa merkittävän poikkeaman havaitsem
   hl:'loppuraportti kuukauden kuluessa jatkoilmoituksen toimittamisesta',
   en:'Final report within one month of the follow-up report. For a long-running incident, within one month after handling ends.'},
  fi_26:{law:'fi',cite:'26 §',use:'Who receives your NIS2 reports',lang:'fi',
-  text:`Lääkealan turvallisuus- ja kehittämiskeskus siltä osin kuin kyse on liitteen I kohdan 13 alakohdissa c–f ja liitteen II kohdissa 9 ja 10 tarkoitetuista toimijoista;`,
+  text:`Lääkealan turvallisuus- ja kehittämiskeskus siltä osin kuin kyse on liitteen I kohdan 13 alakohdissa c–f ja liitteen II kohdissa 9 ja 10 tarkoitetuista toimijoista.`,
   hl:'Lääkealan turvallisuus- ja kehittämiskeskus',
   en:'Fimea supervises the entities in Annex II points 9 and 10 of the Act, which are medical device and IVD manufacturers. Your NIS2 reports go to Fimea.'},
  gdpr_4_12:{law:'gdpr',cite:'Art. 4(12)',a:'art_4',use:'Is it a personal data breach?',
@@ -809,6 +827,23 @@ Ensi-ilmoitus on tehtävä 24 tunnin kuluessa merkittävän poikkeaman havaitsem
 (a) it negatively affects or is capable of negatively affecting the ability of a product with digital elements to protect the availability, authenticity, integrity or confidentiality of sensitive or important data or functions; or
 (b) it has led or is capable of leading to the introduction or execution of malicious code in a product with digital elements or in the network and information systems of a user of the product with digital elements.`,
   hl:'shall be considered to be severe where'},
+ fi_14:{law:'fi',cite:'14 §',use:'Customer notice in Finland',lang:'fi',
+  text:`Toimijan on ilmoitettava viipymättä merkittävästä poikkeamasta palvelujensa vastaanottajille, jos merkittävä poikkeama todennäköisesti haittaa toimijan palvelujen tarjoamista.
+Toimijan on ilmoitettava viipymättä merkittävästä kyberuhkasta sekä kyberuhkan hallitsemiseksi käytettävissä olevista toimenpiteistä niille palvelujensa vastaanottajille, joihin merkittävä kyberuhka saattaa vaikuttaa.`,
+  hl:'Toimijan on ilmoitettava viipymättä merkittävästä poikkeamasta palvelujensa vastaanottajille',
+  en:'You must tell the recipients of your services without delay about a significant incident that is likely to harm the provision of your services. You must also tell them without delay about a significant cyber threat that may affect them, and what they can do about it.'},
+ nis2_23_2:{law:'nis2',cite:'Art. 23(2)',a:'art_23',use:'Warn customers about a significant cyber threat',
+  text:`Where applicable, Member States shall ensure that essential and important entities communicate, without undue delay, to the recipients of their services that are potentially affected by a significant cyber threat any measures or remedies that those recipients are able to take in response to that threat. Where appropriate, the entities shall also inform those recipients of the significant cyber threat itself.`,
+  hl:'any measures or remedies that those recipients are able to take'},
+ mdr_92_5:{law:'mdr',cite:'Art. 92(5)',a:'art_92',use:'Who receives a serious incident report',
+  text:`The reports on serious incidents referred to in point (a) of Article 87(1) shall be automatically transmitted, upon receipt, via the electronic system referred to in paragraph 1 of this Article, to the competent authority of the Member State in which the incident occurred.`,
+  hl:'the competent authority of the Member State in which the incident occurred'},
+ mdr_89_8:{law:'mdr',cite:'Art. 89(8)',a:'art_89',use:'Field safety notice',
+  text:`The manufacturer shall ensure that information about the field safety corrective action taken is brought without delay to the attention of users of the device in question by means of a field safety notice. The field safety notice shall be edited in an official Union language or languages determined by the Member State in which the field safety corrective action is taken. Except in cases of urgency, the content of the draft field safety notice shall be submitted to the evaluating competent authority or, in the cases referred to in paragraph 9, to the coordinating competent authority to allow it to make comments.`,
+  hl:'the content of the draft field safety notice shall be submitted to the evaluating competent authority'},
+ cra_14_8:{law:'cra',cite:'Art. 14(8)',a:'art_14',use:'Inform impacted users',
+  text:`After becoming aware of an actively exploited vulnerability or a severe incident having an impact on the security of the product with digital elements, the manufacturer shall inform the impacted users of the product with digital elements, and where appropriate all users, of that vulnerability or incident and, where necessary, of any risk mitigation and corrective measures that the users can deploy to mitigate the impact of that vulnerability or incident, where appropriate in a structured, machine-readable format that is easily automatically processable.`,
+  hl:'the manufacturer shall inform the impacted users'},
  cra_71_2:{law:'cra',cite:'Art. 71(2)',a:'art_71',use:'When reporting starts',
   text:`This Regulation shall apply from 11 December 2027.
 However, Article 14 shall apply from 11 September 2026 and Chapter IV (Articles 35 to 51) shall apply from 11 June 2026.`,
@@ -830,7 +865,7 @@ const HELP={
  q_cross:{t:'Cross-border impact',icon:'flag',p:'The NIS2 early warning must say if the incident could affect other EU countries, for example customers or sites abroad.',r:['nis2_23_4a']},
  q_pd:{t:'Personal data breach',icon:'person',p:'A breach is not only a leak. Lost access (ransomware) and changed data count too.',r:['gdpr_4_12']},
  q_risk:{t:'Risk to people',icon:'person',p:'You must notify unless the breach is unlikely to create a risk. Even when you do not notify, record the breach in your own register.',r:['gdpr_33_1','gdpr_33_5']},
- q_highrisk:{t:'High risk to people',icon:'person',p:'When the risk is high, you must also tell the people affected. Health data usually means high risk.',r:['gdpr_34_1']},
+ q_highrisk:{t:'High risk to people',icon:'person',p:'When the risk is high, you must also tell the people affected. Health data usually means high risk. You may not need to tell people if the data was unreadable to others (for example encrypted), if later measures removed the high risk, or if it would take disproportionate effort (then use a public notice instead). Check Art. 34(3).',r:['gdpr_34_1']},
  q_device:{t:'Device on the market affected',icon:'pulse',p:'A cyber incident becomes a vigilance case when it could change how a device on the market performs, for example tampered device software or wrong production or sterilisation records.',r:['mdr_2_64','mdr_87_1a']},
  q_severity:{t:'How serious for patients',icon:'pulse',p:'The deadline depends on severity: 2 days for a serious public health threat, 10 days for death or unexpected serious harm, 15 days for other serious incidents.',r:['mdr_2_65','mdr_2_66','mdr_87_4','mdr_87_5','mdr_87_3']},
  q_exploited:{t:'Actively exploited vulnerability',icon:'chip',p:'Report as soon as you know someone is exploiting a vulnerability in your product, even before you have a fix.',r:['cra_14_1','cra_14_2']},
@@ -842,31 +877,37 @@ const HELP={
  'd-nis2-ew':{t:'NIS2 early warning, 24 h',icon:'clock',p:'A short first notice. It says what you know so far and whether you suspect a malicious act or cross-border impact.',r:['nis2_23_4a','fi_11']},
  'd-nis2-n':{t:'NIS2 incident notification, 72 h',icon:'clock',p:'Updates the early warning with your first assessment of severity and impact, and indicators of compromise if you have them.',r:['nis2_23_4b','fi_11']},
  'd-nis2-f':{t:'NIS2 final report, 1 month',icon:'clock',p:'Due one month after you sent the incident notification. Until you mark the notification as sent, the date is an estimate from the 72 hour deadline. For a long-running incident, the final report is due one month after handling ends (NIS2 Art. 23(4)(e) and Cybersecurity Act 13 §).',r:['nis2_23_4d','nis2_23_4e','fi_13']},
- 'd-nis2-c':{t:'Inform affected customers',icon:'send',p:'Where appropriate, tell the customers who use your services about a significant incident that is likely to affect those services. No fixed hours, but without undue delay. If it does not apply, mark it as not needed and say why.',r:['nis2_23_1b']},
+ 'd-nis2-c':{t:'Inform affected customers',icon:'send',p:'In Finland this is required: tell the recipients of your services without delay when a significant incident is likely to harm the provision of your services (Cybersecurity Act 14 §). If your services are not affected, mark it as not needed and write why.',r:['nis2_23_1b','fi_14']},
  'd-gdpr-c':{t:'Notify the controller',icon:'person',p:'You process this data for a customer, so you are their processor. Tell the customer (the controller) without undue delay. Your data processing agreement often sets a shorter deadline. The controller decides if the authority and the people affected must be told.',r:['gdpr_33_2']},
- sec_comp:{t:'Compliance summary',icon:'shield',p:'Auditors and authorities do not only ask if you reported. They ask if you have an incident process, if you followed it, who decided and if management approved it. This summary answers that for one incident: every duty, what was done and when, and the reason when something was not needed. It also maps to ISO 27001 controls A.5.24 to A.5.28 (incident planning, decision, response, lessons learned, evidence).',r:['nis2_21_2','nis2_20_1','gdpr_5_2','gdpr_33_5']},
- 'd-mdr-qa':{t:'QA decision on devices',icon:'pulse',p:'The MDR clock starts when you learn that a device on the market may be affected, not when the IT incident started. Until then there is no MDR deadline. QA decides and records when they learned it. If you are unsure after that, report anyway within the deadline.',r:['mdr_87_3','mdr_87_7']},
+ sec_comp:{t:'Compliance summary',icon:'shield',p:'Auditors and authorities do not only ask if you reported. They ask if you have an incident process, if you followed it, who decided and if management approved it. This summary answers that for one incident: every duty, what was done and when, and the reason when something was not needed. It also maps to ISO 27001 controls A.5.24 to A.5.27 (incident planning, decision, response, lessons learned). A sign-off per incident supports, but does not replace, management approval of the incident process (NIS2 Art. 20(1)).',r:['nis2_21_2','nis2_20_1','gdpr_5_2','gdpr_33_5']},
+ 'd-mdr-qa':{t:'QA decision on devices',icon:'pulse',p:'While it is unclear if a device on the market is affected, the MDR clock runs provisionally, because Art. 87(7) says to report within the deadline even when unsure. QA records the decision: is a device affected, and when did anyone in the company first get information about it.',r:['mdr_87_7','mdr_87_3']},
  q_controller:{t:'Controller or processor',icon:'person',p:'The controller decides why and how personal data is used, for example your own employee data. If you only handle the data for a customer, you are their processor: you tell the customer, and the customer notifies the authority.',r:['gdpr_33_2','gdpr_33_1']},
- q_mdrAware:{t:'When the MDR clock starts',icon:'pulse',p:'MDR deadlines count from when you become aware of the incident with the device. Enter the time you learned that a device on the market may be affected.',r:['mdr_87_3','mdr_87_7']},
+ q_mdrAware:{t:'When the MDR clock starts',icon:'pulse',p:'MDR deadlines count from when the manufacturer becomes aware. Awareness starts with the first information that a device on the market may be affected, not when the investigation ends. Leave it empty to count from the incident awareness time.',r:['mdr_87_3','mdr_87_7']},
  'd-gdpr-a':{t:'GDPR notification, 72 h',icon:'clock',p:'If you are late, add the reasons for the delay. You can send the details in phases.',r:['gdpr_33_1','gdpr_33_3','gdpr_33_4']},
- 'd-gdpr-s':{t:'Informing the people affected',icon:'person',p:'No fixed hours, but "without undue delay". Use clear, plain language.',r:['gdpr_34_1']},
- 'd-mdr-r':{t:'Serious incident report',icon:'clock',p:'The clock is 2, 10 or 15 days depending on severity. You may send an incomplete first report and complete it later.',r:['mdr_87_3','mdr_87_4','mdr_87_5','mdr_87_7']},
+ 'd-gdpr-s':{t:'Informing the people affected',icon:'person',p:'No fixed hours, but "without undue delay". Use clear, plain language. You may not need to tell people if the data was unreadable to others (for example encrypted), if later measures removed the high risk, or if it would take disproportionate effort (then use a public notice instead). Check Art. 34(3).',r:['gdpr_34_1','gdpr_34_2']},
+ 'd-mdr-r':{t:'Serious incident report',icon:'clock',p:'The clock is 2, 10 or 15 days depending on severity. When you are unsure, report anyway within the deadline. The report goes to the competent authority of the country where the incident occurred (Fimea for Finland). You may send an incomplete first report and complete it later.',r:['mdr_87_3','mdr_87_4','mdr_87_5','mdr_87_7','mdr_92_5']},
  'd-nis2-i':{t:'NIS2 intermediate report',icon:'clock',p:'No fixed date. Send it when the authority asks for a status update.',r:['nis2_23_4c','fi_12']},
  'd-nis2-p':{t:'NIS2 progress report',icon:'clock',p:'If the incident is still being handled when the final report would be due, send a progress report then, and the final report one month after handling ends.',r:['nis2_23_4e','fi_12','fi_13']},
  'd-gdpr-f':{t:'GDPR follow-up information',icon:'clock',p:'If you did not know everything at 72 hours, send the rest in phases as you learn it.',r:['gdpr_33_4']},
  'd-gdpr-r':{t:'Internal breach register',icon:'list',p:'Every personal data breach goes in your own register, also the ones you do not notify. Record the facts, effects, what you did and why you did or did not notify.',r:['gdpr_33_5']},
  'd-mdr-f':{t:'MDR final report',icon:'clock',p:'After your investigation, send a final report with the findings, conclusions and corrective actions.',r:['mdr_89_5']},
- 'd-mdr-fsca':{t:'Field safety corrective action',icon:'pulse',p:'Only if you need to act on devices in the field (recall, software update, warning). Report it before you act, except in urgent cases.',r:['mdr_87_8']},
+ 'd-mdr-fsca':{t:'Field safety corrective action',icon:'pulse',p:'Only if you need to act on devices in the field (recall, software update, warning). Report it before you act, except in urgent cases. Users are told through a field safety notice: send the draft notice to the evaluating competent authority for comments before you use it, except in urgent cases.',r:['mdr_87_8','mdr_89_8']},
  'd-cra-ew':{t:'CRA early warning, 24 h',icon:'clock',p:'Sent to the CSIRT and ENISA at the same time, through the single reporting platform.',r:['cra_14_2','cra_14_4']},
  'd-cra-n':{t:'CRA notification, 72 h',icon:'clock',p:'General information about the product, the exploit or incident, and what users can do.',r:['cra_14_2','cra_14_4']},
  'd-cra-fv':{t:'CRA final report (vulnerability)',icon:'clock',p:'Due 14 days after a fix or mitigation is available. A mitigation also starts the clock. Enter the date a fix or mitigation was available and the clock starts.',r:['cra_14_2']},
- 'd-cra-fi':{t:'CRA final report (incident)',icon:'clock',p:'Due one month after you sent the incident notification. Until you mark the notification as sent, the date is an estimate from the 72 hour deadline.',r:['cra_14_4']}
+ 'd-cra-fi':{t:'CRA final report (incident)',icon:'clock',p:'Due one month after you sent the incident notification. Until you mark the notification as sent, the date is an estimate from the 72 hour deadline.',r:['cra_14_4']},
+ 'd-nis2-t':{t:'Warn customers about a cyber threat',icon:'send',p:'When you learn of a significant cyber threat that may affect the recipients of your services, tell them without delay what they can do about it, and where appropriate about the threat itself. If there is no such threat, mark it as not needed and write why.',r:['nis2_23_2','fi_14']},
+ 'd-cra-u':{t:'Inform impacted users',icon:'chip',p:'After you become aware of an actively exploited vulnerability or a severe incident in your product, tell the impacted users (and where appropriate all users) what happened and what they can do to reduce the impact.',r:['cra_14_8']},
+ q_gdprAware:{t:'When the GDPR clock starts',icon:'person',p:'The 72 hours count from when you became reasonably certain that personal data was affected. Leave it empty to count from the incident awareness time.',r:['gdpr_33_1']},
+ q_craAware:{t:'When the CRA clock starts',icon:'chip',p:'The CRA deadlines count from when you became aware of the exploited vulnerability or the severe incident in your product. Leave it empty to count from the incident awareness time.',r:['cra_14_2','cra_14_4']},
+ why:{t:'Why, and who decided?',icon:'list',p:'This answer removes a reporting duty. Authorities and auditors will ask why you did not report and who decided. Write the reason and the name of the person who decided. It goes in the decision log and the compliance summary.',r:['gdpr_33_5','nis2_20_1']},
+ sec_after:{t:'After the incident',icon:'list',p:'Find the root cause, agree corrective and preventive actions with an owner and a due date, and write down what you learned. This is what ISO 27001 A.5.27 (learning from incidents) and ISO 13485 8.5.2 (corrective action) ask for.',r:['nis2_21_2']}
 };
 
 /* ---------- Triage questions ---------- */
 const Q=[
  {g:'Your company',icon:'building'},
- {id:'nis2',k:'In NIS2 scope',q:'Is your company an essential or important entity under NIS2?',hint:'Medium-sized and larger medical device manufacturers are important entities (Annex II).'},
+ {id:'nis2',k:'In NIS2 scope',q:'Is your company an essential or important entity under NIS2?',hint:'Medium-sized and larger medical device manufacturers are important entities (Annex II). The size test also counts the balance sheet and linked or partner companies. Large manufacturers of devices on the EU list of critical devices for a public health emergency are essential entities, not important ones.'},
  {id:'pde',k:'Sells CRA products',q:'Do you sell non-medical products with software or connectivity in the EU?',hint:'This is the CRA scope. Devices covered by the MDR are excluded.'},
  {g:'The incident',icon:'alert'},
  {id:'disrupt',k:'Severe disruption',q:'Has it caused, or could it cause, severe disruption to your operations or services?'},
@@ -878,13 +919,15 @@ const Q=[
  {id:'controller',k:'Controller of the data',q:'Do you decide why and how this data is used (are you the controller)?',hint:'Answer No if you only handle the data for a customer (you are their processor). Unsure shows both paths.',dep:'pd'},
  {id:'risk',k:'Risk to people',q:'Is it likely to create a risk for the people concerned?',hint:'Answer No only if risk is unlikely, for example encrypted data with the key safe.',dep:'pd',dep2:'controller'},
  {id:'highrisk',k:'High risk to people',q:'Is the risk high, for example health data exposed?',dep:'pd',dep2:'controller'},
+ {id:'gdprAware',k:'GDPR awareness time',q:'When did you become reasonably certain that personal data was affected?',hint:'Leave it empty to count from the incident awareness time.',dep:'pd',type:'time'},
  {g:'Medical devices',icon:'pulse'},
  {id:'device',k:'Device on market affected',q:'Could a device on the market be affected?',hint:'For example device software, design files, or production and sterilisation records.'},
- {id:'mdrAware',k:'MDR awareness time',q:'When did you learn a device on the market may be affected?',hint:'The MDR clock counts from this time, not from the IT incident. Leave it empty until QA has decided.',dep:'device',type:'time'},
+ {id:'mdrAware',k:'MDR awareness time',q:'When did anyone in the company first get information that a device on the market may be affected?',hint:'Leave it empty to count from the incident awareness time.',dep:'device',type:'time'},
  {id:'severity',k:'Vigilance severity',q:'How serious is the possible effect on patients?',dep:'device',type:'select'},
  {g:'Products (CRA)',icon:'chip',dep:'pde'},
  {id:'exploited',k:'Exploited product vulnerability',q:'Is a vulnerability in your product being actively exploited?',dep:'pde'},
- {id:'severe',k:'Product security affected',q:'Does the incident affect the security of your product?',dep:'pde'}
+ {id:'severe',k:'Product security affected',q:'Does the incident affect the security of your product?',dep:'pde'},
+ {id:'craAware',k:'CRA awareness time',q:'When did you become aware of the exploited vulnerability or the severe product incident?',hint:'Leave it empty to count from the incident awareness time.',dep:'pde',type:'time'}
 ];
 const SEV=[['unknown','Not decided yet'],['none','Not serious'],['serious','Serious incident'],['death','Death or unexpected serious harm to health'],['public','Serious public health threat']];
 const ANS={yes:'Yes',unsure:'Unsure',no:'No'};
@@ -907,7 +950,15 @@ const FU=[
  {k:'states',l:'Member States where the product is sold'},
  {k:'fixdate',l:'Date a fix or mitigation was available',type:'date'},
  {k:'ended',l:'Date incident handling ended',type:'date'},
- {k:'mdrAware',l:'When you learned a device on the market may be affected',type:'datetime-local'}
+ {k:'mdrAware',l:'When the company first got information that a device on the market may be affected',type:'datetime-local'},
+ {k:'gdprAware',l:'When you became reasonably certain that personal data was affected',type:'datetime-local'},
+ {k:'craAware',l:'When you became aware of the CRA vulnerability or incident',type:'datetime-local'},
+ {k:'countries',l:'Countries where the incident occurred or the devices are'},
+ {k:'fsn',l:'Draft field safety notice for users'},
+ {k:'cats',l:'Categories of people and of personal data records'},
+ {k:'threat',l:'Significant cyber threat: what it is and who it may affect'},
+ {k:'capa',l:'Corrective and preventive actions (what, owner, due date)'},
+ {k:'lessons',l:'Lessons learned'}
 ];
 const FL={name:'Incident',org:'Organisation',desc:'What happened',systems:'Systems affected',people:'People affected'};FU.forEach(x=>FL[x.k]=x.l);
 const val=k=>S[k]&&String(S[k]).trim()?String(S[k]).trim():'';
@@ -917,11 +968,13 @@ const awS=()=>{const d=new Date(S.aware);return isNaN(d)?'[date and time]':fmtLo
 const refOf=id=>S.ref&&S.ref[id]?String(S.ref[id]).trim():'';
 const sentS=id=>S.done[id]?fmtLog(new Date(S.done[id]))+(refOf(id)?', reference '+refOf(id):''):'[date sent]';
 const mawS=()=>{const d=new Date(S.mdrAware);return S.mdrAware&&!isNaN(d)?fmtLog(d):awS()};
+const tS=k=>{const d=new Date(S[k]);return S[k]&&!isNaN(d)?fmtLog(d):awS()};
+const gawS=()=>tS('gdprAware'), cawS=()=>tS('craAware');
 const N=(l,k,ref)=>({l,k,ref}), A=(l,a,ref)=>({l,a,ref});
 const TPL={
- 'nis2-ew':{title:'Early warning (ensi-ilmoitus)',need:[N('What happened','desc','nis2_23_4a'),A('Malicious or unlawful act suspected?','malicious','nis2_23_4a'),A('Possible cross-border impact?','cross','nis2_23_4a'),N('Contact person','contact','fi_11')],
+ 'nis2-ew':{title:'Early warning (ensi-ilmoitus)',need:[N('What happened','desc','nis2_23_4a'),A('Malicious or unlawful act suspected?','malicious','nis2_23_4a'),A('Possible cross-border impact?','cross','nis2_23_4a'),N('Contact person (good practice)','contact',null)],
    text:()=>`Subject: NIS2 early warning (ensi-ilmoitus): ${f('name')}\n\nTo: Fimea, supervisory authority under the Cybersecurity Act 124/2025\nOrganisation: ${f('org')}\nBecame aware: ${awS()}\n\nWhat happened:\n${f('desc')}\n\nSystems affected: ${f('systems')}\nMalicious or unlawful act suspected: ${yn('malicious')}\nPossible impact in other EU countries: ${yn('cross')}\n\nNext: incident notification (jatkoilmoitus) within 72 hours of awareness.\nContact: ${f('contact')}`},
- 'nis2-n':{title:'Incident notification (jatkoilmoitus)',need:[N('Update of the early warning','desc','nis2_23_4b'),N('Initial assessment: severity and impact','impact','nis2_23_4b'),N('Indicators of compromise, if available','ioc','nis2_23_4b'),N('Contact person','contact','fi_11')],
+ 'nis2-n':{title:'Incident notification (jatkoilmoitus)',need:[N('Update of the early warning','desc','nis2_23_4b'),N('Initial assessment: severity and impact','impact','nis2_23_4b'),N('Indicators of compromise, if available','ioc','nis2_23_4b'),N('Contact person (good practice)','contact',null)],
    text:()=>`Subject: NIS2 incident notification (jatkoilmoitus): ${f('name')}\n\nTo: Fimea\nOrganisation: ${f('org')}\nBecame aware: ${awS()}\nEarly warning sent: ${sentS('nis2-ew')}\n\nUpdate to the early warning:\n${f('desc')}\n\nInitial assessment, severity and impact:\n${f('impact')}\n\nIndicators of compromise:\n${f('ioc')}\n\nMitigation so far:\n${f('mitigation')}\n\nMalicious act suspected: ${yn('malicious')} · Cross-border impact: ${yn('cross')}\nContact: ${f('contact')}`},
  'nis2-i':{title:'Intermediate report (on request)',need:[N('Status update: impact','impact','nis2_23_4c'),N('Status update: mitigation','mitigation','nis2_23_4c')],
    text:()=>`Subject: NIS2 intermediate report: ${f('name')}\n\nTo: Fimea (requested on [date of request])\nOrganisation: ${f('org')}\nNotification sent: ${sentS('nis2-n')}\n\nCurrent status and impact:\n${f('impact')}\n\nMitigation applied and ongoing:\n${f('mitigation')}\n\nRoot cause, if known:\n${f('cause')}\n\nContact: ${f('contact')}`},
@@ -929,34 +982,38 @@ const TPL={
    text:()=>`Subject: NIS2 progress report (väliraportti): ${f('name')}\n\nTo: Fimea\nOrganisation: ${f('org')}\nNotification sent: ${sentS('nis2-n')}\n\nThe incident is still being handled. The final report follows within one month after handling ends.\n\nStatus and impact:\n${f('impact')}\n\nMitigation applied and ongoing:\n${f('mitigation')}\n\nRoot cause so far:\n${f('cause')}\n\nContact: ${f('contact')}`},
  'nis2-f':{title:'Final report (loppuraportti)',need:[N('(i) Detailed description, severity and impact','impact','nis2_23_4d'),N('(ii) Type of threat or root cause','cause','nis2_23_4d'),N('(iii) Applied and ongoing mitigation','mitigation','nis2_23_4d'),N('(iv) Cross-border impact, where applicable','crossb','nis2_23_4d')],
    text:()=>`Subject: NIS2 final report (loppuraportti): ${f('name')}\n\nTo: Fimea\nOrganisation: ${f('org')}\nBecame aware: ${awS()} · Notification sent: ${sentS('nis2-n')}\n\n(i) Detailed description, severity and impact:\n${f('desc')}\n${f('impact')}\n\n(ii) Type of threat or root cause:\n${f('cause')}\n\n(iii) Applied and ongoing mitigation:\n${f('mitigation')}\n\n(iv) Cross-border impact:\n${v('cross')==='no'?'None identified.':f('crossb')}\n\nContact: ${f('contact')}`},
- 'gdpr-a':{title:'Notification to the authority',need:[N('(a) Nature of the breach','desc','gdpr_33_3'),N('(a) Approx. number of people and records','people','gdpr_33_3'),N('(b) Data protection contact','dpo','gdpr_33_3'),N('(c) Likely consequences','consequences','gdpr_33_3'),N('(d) Measures taken or proposed','mitigation','gdpr_33_3')],
-   text:()=>`Subject: Personal data breach notification: ${f('name')}\n\nTo: Office of the Data Protection Ombudsman\nController: ${f('org')}\nBecame aware: ${awS()}\n\n(a) Nature of the breach:\n${f('desc')}\nPeople and records affected (approx.): ${f('people')}\n\n(b) Data protection contact: ${f('dpo')}\n\n(c) Likely consequences:\n${f('consequences')}\n\n(d) Measures taken or proposed:\n${f('mitigation')}\n\nPeople informed: ${v('highrisk')==='yes'?'Yes, high risk. Informing them without undue delay.':v('highrisk')==='no'?'No, risk is not high.':'Under assessment.'}\nIf later than 72 hours, reason for delay: [explain]`},
+ 'gdpr-a':{title:'Notification to the authority',need:[N('(a) Nature of the breach','desc','gdpr_33_3'),N('(a) Approx. number of people and records','people','gdpr_33_3'),N('(a) Categories of people and of records','cats','gdpr_33_3'),N('(b) Data protection contact','dpo','gdpr_33_3'),N('(c) Likely consequences','consequences','gdpr_33_3'),N('(d) Measures taken or proposed','mitigation','gdpr_33_3')],
+   text:()=>`Subject: Personal data breach notification: ${f('name')}\n\nTo: Office of the Data Protection Ombudsman\nController: ${f('org')}\nBecame aware: ${gawS()}\n\n(a) Nature of the breach:\n${f('desc')}\nPeople and records affected (approx.): ${f('people')}\nCategories of people and of records: ${f('cats')}\n\n(b) Data protection contact: ${f('dpo')}\n\n(c) Likely consequences:\n${f('consequences')}\n\n(d) Measures taken or proposed:\n${f('mitigation')}\n\nPeople informed: ${v('highrisk')==='yes'?'Yes, high risk. Informing them without undue delay.':v('highrisk')==='no'?'No, risk is not high.':'Under assessment.'}\nIf later than 72 hours, reason for delay: [explain]`},
  'gdpr-f':{title:'Follow-up information (in phases)',need:[N('People and records, updated','people','gdpr_33_4'),N('Consequences, updated','consequences','gdpr_33_4'),N('Measures, updated','mitigation','gdpr_33_4')],
    text:()=>`Subject: Follow-up to personal data breach notification: ${f('name')}\n\nTo: Office of the Data Protection Ombudsman\nOur notification: ${sentS('gdpr-a')}${refOf('gdpr-a')?'':' [case number]'}\n\nNew or corrected information:\nPeople and records affected: ${f('people')}\nLikely consequences: ${f('consequences')}\nMeasures taken: ${f('mitigation')}\nRoot cause: ${f('cause')}\n\nContact: ${f('dpo')}`},
  'gdpr-s':{title:'Message to the people affected',need:[N('Nature of the breach, in plain language','desc','gdpr_34_2'),N('Contact point','dpo','gdpr_34_2'),N('Likely consequences','consequences','gdpr_34_2'),N('What we did','mitigation','gdpr_34_2'),N('What they can do','advice','gdpr_34_2')],
-   text:()=>`Subject: Information about a data security incident that affects your data\n\nHello,\n\nOn ${awS().slice(0,10)} we found the following: ${f('desc')}\n\nWhat this may mean for you:\n${f('consequences')}\n\nWhat we have done:\n${f('mitigation')}\n\nWhat you can do:\n${f('advice')}\n\nIf you have questions, contact ${f('dpo')}.\n\n${f('org')}`},
+   text:()=>`Subject: Information about a data security incident that affects your data\n\nHello,\n\nOn ${gawS().slice(0,10)} we found the following: ${f('desc')}\n\nWhat this may mean for you:\n${f('consequences')}\n\nWhat we have done:\n${f('mitigation')}\n\nWhat you can do:\n${f('advice')}\n\nIf you have questions, contact ${f('dpo')}.\n\n${f('org')}`},
  'gdpr-r':{title:'Internal breach register entry',need:[N('Facts of the breach','desc','gdpr_33_5'),N('Effects','consequences','gdpr_33_5'),N('Remedial action taken','mitigation','gdpr_33_5')],
-   text:()=>`Breach register entry\n\nBreach: ${f('name')}\nBecame aware: ${awS()}\nFacts: ${f('desc')}\nData and people concerned: ${f('people')}\nEffects: ${f('consequences')}\nRemedial action: ${f('mitigation')}\n\nDecision on notification:\nRisk to people likely: ${yn('risk')} · High risk: ${yn('highrisk')}\nAuthority notified: ${S.done['gdpr-a']?'Yes, '+sentS('gdpr-a'):(v('risk')==='no'&&v('highrisk')!=='yes'?'No, risk unlikely (Art. 33(1))':'Not yet')}\nPeople informed: ${S.done['gdpr-s']?'Yes, '+sentS('gdpr-s'):'No'}\nDecided by: [name, role]`},
- 'mdr-r':{title:'Initial report (MIR)',need:[N('Event description','desc','mdr_87_1a'),N('Devices, lots or serials','devices','mdr_87_1a'),N('Patient impact so far','patient','mdr_2_65'),N('Contact person','contact','mdr_87_3')],
-   text:()=>`Manufacturer Incident Report (MIR): initial report\n\nTo: Fimea\nManufacturer: ${f('org')}\nManufacturer aware: ${mawS()}\nSeverity: ${(SEV.find(s=>s[0]===S.a.severity)||SEV[0])[1]}\n\nEvent description:\n${f('desc')}\n\nAffected records or systems: ${f('systems')}\nDevices, lots or serial numbers: ${f('devices')}\nPatient impact known so far: ${f('patient')}\nInvestigation status and next steps: ${f('mitigation')}\nContact: ${f('contact')}`},
+   text:()=>`Breach register entry\n\nBreach: ${f('name')}\nBecame aware: ${gawS()}\nFacts: ${f('desc')}\nData and people concerned: ${f('people')}\nEffects: ${f('consequences')}\nRemedial action: ${f('mitigation')}\n\nDecision on notification:\nRisk to people likely: ${yn('risk')} · High risk: ${yn('highrisk')}\nAuthority notified: ${S.done['gdpr-a']?'Yes, '+sentS('gdpr-a'):(v('risk')==='no'&&v('highrisk')!=='yes'?'No, risk unlikely (Art. 33(1))':'Not yet')}\nPeople informed: ${S.done['gdpr-s']?'Yes, '+sentS('gdpr-s'):'No'}\nDecided by: [name, role]`},
+ 'mdr-r':{title:'Initial report (MIR)',need:[N('Event description','desc','mdr_87_1a'),N('Countries where the incident occurred','countries','mdr_92_5'),N('Devices, lots or serials','devices','mdr_87_1a'),N('Patient impact so far','patient','mdr_2_65'),N('Contact person','contact','mdr_87_3')],
+   text:()=>`Manufacturer Incident Report (MIR): initial report\n\nTo: Competent authority of ${f('countries')} (Fimea for Finland), through EUDAMED or the national MIR form\nManufacturer: ${f('org')}\nManufacturer aware: ${mawS()}\nSeverity: ${(SEV.find(s=>s[0]===S.a.severity)||SEV[0])[1]}\n\nEvent description:\n${f('desc')}\n\nAffected records or systems: ${f('systems')}\nDevices, lots or serial numbers: ${f('devices')}\nPatient impact known so far: ${f('patient')}\nInvestigation status and next steps: ${f('mitigation')}\nContact: ${f('contact')}`},
  'mdr-f':{title:'Final report (MIR)',need:[N('Findings and conclusions','conclusion','mdr_89_5'),N('Root cause','cause','mdr_89_5'),N('Devices concerned','devices','mdr_89_5')],
-   text:()=>`Manufacturer Incident Report (MIR): final report\n\nTo: Fimea\nManufacturer: ${f('org')}\nInitial report sent: ${sentS('mdr-r')}${refOf('mdr-r')?'':' [MIR reference]'}\n\nRoot cause:\n${f('cause')}\n\nFindings, conclusions and corrective actions:\n${f('conclusion')}\n\nDevices, lots or serial numbers: ${f('devices')}\nPatient impact: ${f('patient')}`},
- 'mdr-fsca':{title:'Field safety corrective action notice',need:[N('Devices concerned','devices','mdr_87_8'),N('Planned field action','conclusion','mdr_87_8')],
-   text:()=>`Field safety corrective action: advance report\n\nTo: Fimea (before the action starts)\nManufacturer: ${f('org')}\nRelated incident: ${f('name')}\n\nDevices, lots or serial numbers: ${f('devices')}\nPlanned action and reason:\n${f('conclusion')}\nPlanned start date: [date]\nField safety notice to customers: [attach draft]`},
+   text:()=>`Manufacturer Incident Report (MIR): final report\n\nTo: Competent authority of ${f('countries')} (Fimea for Finland), through EUDAMED or the national MIR form\nManufacturer: ${f('org')}\nInitial report sent: ${sentS('mdr-r')}${refOf('mdr-r')?'':' [MIR reference]'}\n\nRoot cause:\n${f('cause')}\n\nFindings, conclusions and corrective actions:\n${f('conclusion')}\n\nDevices, lots or serial numbers: ${f('devices')}\nPatient impact: ${f('patient')}`},
+ 'mdr-fsca':{title:'Field safety corrective action notice',need:[N('Devices concerned','devices','mdr_87_8'),N('Countries where the devices are','countries','mdr_87_8'),N('Planned field action','conclusion','mdr_87_8'),N('Draft field safety notice for users','fsn','mdr_89_8')],
+   text:()=>`Field safety corrective action: advance report\n\nTo: Competent authority of ${f('countries')} (Fimea for Finland), before the action starts\nManufacturer: ${f('org')}\nRelated incident: ${f('name')}\n\nDevices, lots or serial numbers: ${f('devices')}\nPlanned action and reason:\n${f('conclusion')}\nPlanned start date: [date]\n\nDraft field safety notice for users:\n${f('fsn')}\n\nSend the draft notice to the evaluating competent authority for comments before you use it, except in urgent cases (MDR Art. 89(8)).`},
  'cra-ew':{title:'Early warning',need:[N('Product and versions','product','cra_14_4'),N('Member States where sold','states','cra_14_4'),A('Malicious act suspected?','malicious','cra_14_4')],
-   text:()=>`Subject: CRA early warning: ${f('name')}\n\nTo: ENISA single reporting platform (CSIRT coordinator: NCSC-FI)\nManufacturer: ${f('org')}\nBecame aware: ${awS()}\nType: ${v('exploited')==='yes'?'Actively exploited vulnerability':v('severe')==='yes'?'Severe incident affecting product security':'Under assessment'}\nProduct and versions: ${f('product')}\nMalicious act suspected: ${yn('malicious')}\nMember States where the product is sold: ${f('states')}\n\nWhat happened:\n${f('desc')}`},
+   text:()=>`Subject: CRA early warning: ${f('name')}\n\nTo: ENISA single reporting platform (CSIRT coordinator: NCSC-FI)\nManufacturer: ${f('org')}\nBecame aware: ${cawS()}\nType: ${v('exploited')==='yes'?'Actively exploited vulnerability':v('severe')==='yes'?'Severe incident affecting product security':'Under assessment'}\nProduct and versions: ${f('product')}\nMalicious act suspected: ${yn('malicious')}\nMember States where the product is sold: ${f('states')}\n\nWhat happened:\n${f('desc')}`},
  'cra-n':{title:'Notification',need:[N('Product concerned','product','cra_14_2'),N('Nature and initial assessment','impact','cra_14_4'),N('Measures taken','mitigation','cra_14_4'),N('Measures users can take','advice','cra_14_4')],
    text:()=>`Subject: CRA notification: ${f('name')}\n\nTo: ENISA single reporting platform\nEarly warning sent: ${sentS('cra-ew')}\nProduct and versions: ${f('product')}\n\nNature and initial assessment:\n${f('impact')}\n\nCorrective or mitigating measures taken:\n${f('mitigation')}\n\nMeasures users can take:\n${f('advice')}\n\nHow sensitive is this information: [low / medium / high]`},
  'cra-fv':{title:'Final report (vulnerability)',need:[N('Date a fix or mitigation was available','fixdate','cra_14_2'),N('(i) Vulnerability, severity and impact','impact','cra_14_2'),N('(ii) Malicious actor information','ioc','cra_14_2'),N('(iii) Security update details','mitigation','cra_14_2')],
    text:()=>`Subject: CRA final report (vulnerability): ${f('name')}\n\nTo: ENISA single reporting platform\nProduct and versions: ${f('product')}\nFix or mitigation available: ${f('fixdate')}\n\n(i) Description of the vulnerability, severity and impact:\n${f('impact')}\n\n(ii) Malicious actor information:\n${f('ioc')}\n\n(iii) Security update or other corrective measures:\n${f('mitigation')}`},
  'cra-fi':{title:'Final report (incident)',need:[N('(i) Description, severity and impact','impact','cra_14_4'),N('(ii) Type of threat or root cause','cause','cra_14_4'),N('(iii) Applied and ongoing mitigation','mitigation','cra_14_4')],
    text:()=>`Subject: CRA final report (incident): ${f('name')}\n\nTo: ENISA single reporting platform\nProduct and versions: ${f('product')}\nNotification sent: ${sentS('cra-n')}\n\n(i) Description, severity and impact:\n${f('desc')}\n${f('impact')}\n\n(ii) Type of threat or root cause:\n${f('cause')}\n\n(iii) Applied and ongoing mitigation:\n${f('mitigation')}`},
- 'nis2-c':{title:'Notice to affected customers',need:[N('What happened','desc','nis2_23_1b'),N('Effect on your services','impact','nis2_23_1b'),N('Contact person','contact','nis2_23_1b')],
+ 'nis2-c':{title:'Notice to affected customers',need:[N('What happened','desc','fi_14'),N('Effect on your services','impact','fi_14'),N('Contact person (good practice)','contact',null)],
    text:()=>`Subject: Service incident notice: ${f('name')}\n\nTo: [affected customers]\nFrom: ${f('org')}\n\nWe are handling a cybersecurity incident that may affect our services to you.\n\nWhat happened:\n${f('desc')}\n\nEffect on our services:\n${f('impact')}\n\nWhat we are doing:\n${f('mitigation')}\n\nWhat you can do:\n${f('advice')}\n\nContact: ${f('contact')}`},
  'gdpr-c':{title:'Notice to the controller (your customer)',need:[N('What happened','desc','gdpr_33_2'),N('Data and people affected','people','gdpr_33_2'),N('What you did','mitigation','gdpr_33_2'),N('Contact person','contact','gdpr_33_2')],
-   text:()=>`Subject: Personal data breach notice to the controller: ${f('name')}\n\nTo: [customer name], controller of the data\nFrom: ${f('org')}, processor under our data processing agreement\nBecame aware: ${awS()}\n\nWhat happened:\n${f('desc')}\n\nData and people affected (approx.): ${f('people')}\n\nWhat we have done:\n${f('mitigation')}\n\nLikely consequences, if known:\n${f('consequences')}\n\nWe will send more information as we learn it.\nContact: ${f('contact')}`},
- 'mdr-qa':{title:'QA decision: is a device on the market affected?',need:[A('Device on the market affected?','device','mdr_87_7'),N('When you learned a device may be affected','mdrAware','mdr_87_3')],
-   text:()=>`Internal record: MDR vigilance decision\n\nIncident: ${f('name')}\nIT incident, became aware: ${awS()}\nDevice on the market affected: ${yn('device')}\nLearned a device may be affected: ${S.mdrAware?mawS():'[date and time]'}\nSeverity: ${(SEV.find(s=>s[0]===S.a.severity)||SEV[0])[1]}\nReason for the decision: [explain]\nDecided by: [name, role]`}
+   text:()=>`Subject: Personal data breach notice to the controller: ${f('name')}\n\nTo: [customer name], controller of the data\nFrom: ${f('org')}, processor under our data processing agreement\nBecame aware: ${gawS()}\n\nWhat happened:\n${f('desc')}\n\nData and people affected (approx.): ${f('people')}\n\nWhat we have done:\n${f('mitigation')}\n\nLikely consequences, if known:\n${f('consequences')}\n\nWe will send more information as we learn it.\nContact: ${f('contact')}`},
+ 'mdr-qa':{title:'QA decision: is a device on the market affected?',need:[A('Device on the market affected?','device','mdr_87_7'),N('When the company first got information that a device may be affected','mdrAware','mdr_87_3')],
+   text:()=>`Internal record: MDR vigilance decision\n\nIncident: ${f('name')}\nIT incident, became aware: ${awS()}\nDevice on the market affected: ${yn('device')}\nFirst information that a device may be affected: ${S.mdrAware?mawS():'[date and time]'}\nSeverity: ${(SEV.find(s=>s[0]===S.a.severity)||SEV[0])[1]}\nThe MDR clock runs provisionally from that time until the decision (Art. 87(7)).\nReason for the decision: [explain]\nDecided by: [name, role]`},
+ 'nis2-t':{title:'Warning to customers about a cyber threat',need:[N('The threat and who it may affect','threat','nis2_23_2'),N('What customers can do about it','advice','nis2_23_2'),N('Contact person (good practice)','contact',null)],
+   text:()=>`Subject: Warning about a cyber threat that may affect you\n\nTo: [customers who may be affected]\nFrom: ${f('org')}\n\nWe have learned of a significant cyber threat that may affect you:\n${f('threat')}\n\nWhat you can do now:\n${f('advice')}\n\nWhat we are doing:\n${f('mitigation')}\n\nContact: ${f('contact')}`},
+ 'cra-u':{title:'Notice to impacted users',need:[N('Product and versions','product','cra_14_8'),N('What happened','desc','cra_14_8'),N('What users can do to reduce the impact','advice','cra_14_8')],
+   text:()=>`Subject: Security notice for ${f('product')}\n\nTo: [impacted users, and where appropriate all users]\nFrom: ${f('org')}\n\nWhat happened:\n${f('desc')}\n\nWhat you should do now:\n${f('advice')}\n\nWhat we have done:\n${f('mitigation')}\n\nWe will tell you when a security update is available.\nContact: ${f('contact')}`}
 };
 const USES={};Object.entries(TPL).forEach(([id,t])=>{const law=id.split('-')[0];t.need.forEach(n=>{if(n.k){(USES[n.k]=USES[n.k]||new Set()).add(law)}})});
 const isDone=n=>n.k==='crossb'&&v('cross')==='no'?true:n.k?!!val(n.k):v(n.a)!=='unsure';
@@ -979,7 +1036,7 @@ const iso=s=>new Date(s).toISOString();
 function example(){
   const a=new Date(Date.now()-5*H-17*60e3);a.setSeconds(0,0);
   const t=m=>new Date(a.getTime()+m*60e3).toISOString();
-  return {v:6,id:newId(),exKey:'ransomware',example:true,createdAt:a.toISOString(),status:'open',closedAt:null,closeNote:'',
+  return {v:7,id:newId(),exKey:'ransomware',example:true,createdAt:a.toISOString(),status:'open',closedAt:null,closeNote:'',
     name:'Ransomware on production file server',org:'Example Medtech Oy',aware:toInput(a),
     desc:'Files on the production file server were encrypted at 06:40. Ransom note found on the server. Server isolated from the network, backups are being checked.',
     systems:'Production file server, label printing share',people:'About 120 employees (HR folder on the share)',
@@ -988,23 +1045,26 @@ function example(){
     mitigation:'Server isolated, admin passwords reset, restore from the 03:00 backup started.',
     cause:'',crossb:'',consequences:'',advice:'',dpo:'',devices:'',patient:'',conclusion:'',product:'',states:'',fixdate:'',ended:'',mdrAware:'',
     a:{nis2:'yes',pde:'no',disrupt:'yes',harm:'unsure',malicious:'yes',cross:'no',pd:'yes',controller:'yes',risk:'yes',highrisk:'unsure',device:'unsure',severity:'unknown',exploited:'no',severe:'no'},
-    done:{},ref:{},skip:{},phase:3,reached:3,tg:null,step:'nis2-ew',
+    done:{},ref:{},skip:{},why:{},doneClick:{},sentText:{},gdprAware:'',craAware:'',phase:3,reached:3,tg:null,step:'nis2-ew',
     log:[{t:t(0),x:'Incident detected by EDR alert, server isolated'},{t:t(35),x:'Incident opened, awareness time set'},{t:t(50),x:'In NIS2 scope: Yes'},{t:t(52),x:'Severe disruption: Yes'},{t:t(53),x:'Malicious act suspected: Yes'},{t:t(70),x:'Personal data affected: Yes (HR folder on the share)'},{t:t(95),x:'Device on market affected: Unsure, QA asked to check production records'}]};
 }
 /* A closed example for History: lost encrypted laptop, GDPR breach with unlikely risk, so only the internal breach register entry. */
 function exampleClosed(){
   const L=(d,x)=>({t:iso(d),x});
-  return {v:6,id:newId(),exKey:'laptop',example:true,createdAt:iso('2026-09-03T09:20'),status:'closed',closedAt:iso('2026-09-05T10:20'),closeNote:'',
+  return {v:7,id:newId(),exKey:'laptop',example:true,createdAt:iso('2026-09-03T09:20'),status:'closed',closedAt:iso('2026-09-05T10:20'),closeNote:'',
     name:'Lost laptop with customer contact data',org:'Example Medtech Oy',aware:'2026-09-03T09:15',
     desc:'A sales employee lost a company laptop on a train in the morning. The disk is encrypted with BitLocker (TPM and PIN). The laptop held a local export of customer contact data: names, work emails and phone numbers.',
     systems:'One company laptop (sales), local CRM export file',people:'About 350 customer contact persons, work contact details only',
     contact:'Example Person, IT Manager, +358 40 000 0000',owner:'Example Person, IT Manager',
     consequences:'Unlikely. The disk is encrypted and the PIN was not kept with the laptop. No special categories of data.',
     mitigation:'Device locked and wipe command sent through Intune at 09:40, user password reset, CRM sessions revoked, police report filed.',
-    impact:'',ioc:'',cause:'Lost device',crossb:'',advice:'',dpo:'Example DPO, dpo@example.com',devices:'',patient:'',conclusion:'',product:'',states:'',fixdate:'',ended:'2026-09-04',mdrAware:'',
+    impact:'',ioc:'',cause:'Laptop left on a train seat. Local CRM export existed although the CRM is cloud based.',crossb:'',advice:'',dpo:'Example DPO, dpo@example.com',devices:'',patient:'',conclusion:'',product:'',states:'',fixdate:'',ended:'2026-09-04',mdrAware:'',
     a:{nis2:'yes',pde:'no',disrupt:'no',harm:'no',malicious:'no',cross:'no',pd:'yes',controller:'yes',risk:'no',highrisk:'no',device:'no',severity:'unknown',exploited:'no',severe:'no'},
-    done:{'gdpr-r':iso('2026-09-03T15:30')},ref:{},skip:{},phase:4,reached:4,tg:null,step:null,
+    done:{'gdpr-r':iso('2026-09-03T15:30')},ref:{},skip:{},doneClick:{},sentText:{},gdprAware:'',craAware:'',phase:4,reached:4,tg:null,step:null,
     signName:'Example Director, Quality Director',signAt:iso('2026-09-05T10:05'),
+    why:{harm:'Laptop only, no service outage and no damage to customers expected. Decided by Example Person, IT Manager.',risk:'Disk encrypted with BitLocker, PIN not kept with the laptop, so the data is unreadable to others. Decided by Example Person with the DPO.',device:'No device software, design or production data on the laptop. Decided by Example Person with QA.'},
+    capa:'Remove local CRM exports from laptops: block export to local disk (owner IT Manager, due 2026-10-31). Remind sales staff about travel security (owner Sales Director, due 2026-09-30).',
+    lessons:'Encryption turned a possible notifiable breach into a register entry. Local data exports should not exist in the first place.',
     log:[L('2026-09-03T09:15','Employee reported the laptop lost on the train'),L('2026-09-03T09:20','Clock started. Became aware 2026-09-03 09:15'),
       L('2026-09-03T09:30','In NIS2 scope: Yes'),L('2026-09-03T09:40','Device locked and wipe command sent through Intune'),
       L('2026-09-03T09:45','Severe disruption: No'),L('2026-09-03T09:46','Damage to others: No'),L('2026-09-03T09:47','Malicious act suspected: No'),L('2026-09-03T09:48','Cross-border impact: No'),
@@ -1017,7 +1077,7 @@ function exampleClosed(){
       L('2026-09-05T10:20','Incident closed')]};
 }
 const EXAMPLES={ransomware:example,laptop:exampleClosed};
-function blank(){const n=new Date();n.setSeconds(0,0);return {v:6,id:newId(),example:false,createdAt:n.toISOString(),status:'open',closedAt:null,closeNote:'',name:'',org:'',aware:toInput(n),desc:'',systems:'',people:'',mdrAware:'',a:{severity:'unknown'},done:{},ref:{},skip:{},phase:1,reached:1,tg:null,step:null,log:[{t:n.toISOString(),x:'New incident opened'}]}}
+function blank(){const n=new Date();n.setSeconds(0,0);return {v:7,id:newId(),example:false,createdAt:n.toISOString(),status:'open',closedAt:null,closeNote:'',name:'',org:'',aware:toInput(n),desc:'',systems:'',people:'',mdrAware:'',a:{severity:'unknown'},gdprAware:'',craAware:'',done:{},ref:{},skip:{},why:{},doneClick:{},sentText:{},phase:1,reached:1,tg:null,step:null,log:[{t:n.toISOString(),x:'New incident opened'}]}}
 /* Bring any saved incident up to v6. v4 and v5 were single-incident states. */
 function migrate(x){
   if(!x||typeof x!=='object'||!x.a)return null;
@@ -1026,8 +1086,9 @@ function migrate(x){
     x.createdAt=x.createdAt||(x.log&&x.log[0]&&x.log[0].t)||new Date().toISOString();
     x.status=x.signAt?'closed':'open';x.closedAt=x.signAt||null;x.closeNote='';
     if(x.example&&!x.exKey&&/^Ransomware on production file server$/.test(x.name||''))x.exKey='ransomware'}
-  if(x.v!==6)return null;
-  x.done=x.done||{};x.ref=x.ref||{};x.skip=x.skip||{};x.log=x.log||[];x.status=x.status==='closed'?'closed':'open';
+  if(x.v===6){x.v=7;x.gdprAware=x.gdprAware||"";x.craAware=x.craAware||""}
+  if(x.v!==7)return null;
+  x.done=x.done||{};x.why=x.why||{};x.doneClick=x.doneClick||{};x.sentText=x.sentText||{};x.ref=x.ref||{};x.skip=x.skip||{};x.log=x.log||[];x.status=x.status==='closed'?'closed':'open';
   return x;
 }
 let INC=null,S=null,view='list',flt='all';
@@ -1048,26 +1109,33 @@ function tri(...ids){const vals=ids.map(v);return vals.includes('yes')?'yes':val
 
 function evaluate(){
   const aw=new Date(S.aware);const ok=!isNaN(aw);const at=h=>ok?new Date(aw.getTime()+h*H):null;
+  /* GDPR, MDR and CRA can have their own awareness time; empty means the incident awareness time. */
+  const own=k=>{const d=S[k]?new Date(S[k]):null;return d&&!isNaN(d)?d:(ok?aw:null)};
+  const from=(base,h)=>base?new Date(base.getTime()+h*H):null;
   const sentAt=id=>S.done[id]?new Date(S.done[id]):null;
   const R=[];
-  {const r={key:'nis2',law:'Art. 23 · Cybersecurity Act 11–13 §',dl:[]};
+  {const r={key:'nis2',law:'Art. 23 · Cybersecurity Act 11–14 §',dl:[]};
    const sig=tri('disrupt','harm'),scope=v('nis2');
    if(scope==='no'){r.st='na';r.why='Your company is not in NIS2 scope.'}
    else if(sig==='no'){r.st='none';r.why='Not a significant incident. Record it in your own incident register.'}
    else{r.st=(sig==='yes'&&scope==='yes')?'applies':'assess';
      r.why=sig==='yes'?'Significant incident: severe disruption or considerable damage to others.':'Could be significant. The clock runs until you decide it is not.';
-     /* Final report counts from the actual notification sent time; until then, an estimate from the 72 h deadline. */
+     /* Progress and final report count from the actual notification sent time; until then, an estimate from the 72 h deadline. */
      const n=at(72),sentN=sentAt('nis2-n'),base=sentN||n,m1=base?addMonth(base):null,end=S.ended?new Date(S.ended+'T00:00'):null;
      const est=sentN?'':'Estimated, counts from when you send the notification';
+     const j=(...a)=>a.filter(Boolean).join('. ');
      r.dl=[{id:'nis2-ew',l:'Early warning',at:at(24)},{id:'nis2-n',l:'Incident notification',at:n},
-       {id:'nis2-c',l:'Inform affected customers (where appropriate)',at:null,when:'Without undue delay',note:'Only if the incident is likely to affect your services to them',opt:true},
+       {id:'nis2-c',l:'Inform affected customers',at:null,when:'Without delay',asap:true,note:'Required in Finland if the incident is likely to harm your services (14 §)',opt:true},
+       {id:'nis2-t',l:'Warn customers about a significant cyber threat',at:null,when:'Without delay',note:'Only if you learn of a significant cyber threat that may affect them',opt:true},
        {id:'nis2-i',l:'Intermediate report',at:null,when:'On request',note:'Only if the authority asks',opt:true}];
-     if(end&&m1&&end>m1)r.dl.push({id:'nis2-p',l:'Progress report',at:m1,note:['Still ongoing 1 month after the notification',est].filter(Boolean).join('. ')},{id:'nis2-f',l:'Final report',at:addMonth(end),note:'1 month after handling ended'});
-     else r.dl.push({id:'nis2-f',l:'Final report',at:m1,note:[end?(sentN?'1 month after the notification was sent':'1 month after the notification'):'If still ongoing then, send a progress report instead',est].filter(Boolean).join('. ')})}
+     /* Long-running incidents: without an end date both the progress report and the final report are shown. */
+     if(!end)r.dl.push({id:'nis2-p',l:'Progress report',at:m1,note:j('If still being handled then',est)},{id:'nis2-f',l:'Final report',at:null,when:'1 month after handling ends',note:'Enter the date handling ended. If it ends before the progress report date, the final report is due then instead'});
+     else if(!m1||end<=m1)r.dl.push({id:'nis2-f',l:'Final report',at:m1,note:j(sentN?'1 month after the notification was sent':'1 month after the notification',est)});
+     else r.dl.push({id:'nis2-p',l:'Progress report',at:m1,note:j('Still being handled 1 month after the notification',est)},{id:'nis2-f',l:'Final report',at:addMonth(end),note:'1 month after handling ended'})}
    R.push(r)}
   {const r={key:'gdpr',law:'Art. 33 and 34',dl:[]};
    /* High risk implies risk. Controller and processor paths; Unsure shows both. */
-   const pd=v('pd'),hi=v('highrisk'),risk=hi==='yes'?'yes':v('risk'),ctl=v('controller');
+   const pd=v('pd'),hi=v('highrisk'),risk=hi==='yes'?'yes':v('risk'),ctl=v('controller'),gb=own('gdprAware');
    const proc={id:'gdpr-c',l:'Notify the controller (your customer)',at:null,when:'Without undue delay',asap:true,note:'Check your data processing agreement for a shorter deadline'};
    const reg={id:'gdpr-r',l:'Internal breach register entry',at:null,when:'Always'};
    if(pd==='no'){r.st='none';r.why='No personal data involved.'}
@@ -1079,32 +1147,34 @@ function evaluate(){
      else{r.st='assess';r.why='Risk to people is unlikely. If you are the controller, record it only. If you handle the data for a customer, tell the customer.';r.dl=[proc,reg]}}
    else{r.st=(pd==='yes'&&risk==='yes'&&ctl==='yes')?'applies':'assess';
      r.why=r.st==='applies'?'Personal data breach that is likely to create a risk for people.':ctl==='unsure'?'Possible personal data breach. Confirm if you are the controller or handle the data for a customer. Both paths are shown.':'Possible personal data breach. Confirm what data was involved.';
-     r.dl=[{id:'gdpr-a',l:'Notify the supervisory authority',at:at(72)},{id:'gdpr-f',l:'Follow-up information',at:null,when:'As you learn',note:'In phases, without undue further delay',opt:true}];
+     r.dl=[{id:'gdpr-a',l:'Notify the supervisory authority',at:from(gb,72),note:S.gdprAware?'Counts from when you became reasonably certain that personal data was affected':''},{id:'gdpr-f',l:'Follow-up information',at:null,when:'As you learn',note:'In phases, without undue further delay',opt:true}];
      if(hi!=='no')r.dl.push({id:'gdpr-s',l:hi==='yes'?'Inform the people affected':'Decide if people must be informed',at:null,note:'Without undue delay',opt:hi!=='yes'});
      if(ctl==='unsure')r.dl.unshift(proc);
      r.dl.push(reg)}
    R.push(r)}
   {const r={key:'mdr',law:'Art. 87 · serious incident',dl:[]};
-   /* MDR has its own awareness time: when you learned a device on the market may be affected. */
-   const dev=v('device'),sev=S.a.severity||'unknown',ma=S.mdrAware?new Date(S.mdrAware):null,mOk=!!ma&&!isNaN(ma),mb=mOk?ma:(ok?aw:null);
-   const atM=h=>mb?new Date(mb.getTime()+h*H):null;
+   /* MDR has its own awareness time: when anyone in the company first got information that a device on the market may be affected.
+      While device is Unsure, the clock runs provisionally (Art. 87(7): report within the timeframe even when uncertain). */
+   const dev=v('device'),sev=S.a.severity||'unknown',mOk=!!S.mdrAware&&!isNaN(new Date(S.mdrAware)),mb=own('mdrAware'),prov=dev==='unsure';
    const fsca={id:'mdr-fsca',l:'Field safety corrective action',at:null,when:'Before acting',note:'Only if you act on devices in the field',opt:true};
+   const qa={id:'mdr-qa',l:'QA decision: is a device on the market affected?',at:null,when:'QA decision',opt:true};
+   const PROV='Provisional: report within the deadline even when unsure (Art. 87(7))';
    if(dev==='no'){r.st='none';r.why='No device on the market is affected.'}
-   else if(dev==='unsure'&&!mOk){r.st='assess';r.why='Not clear yet if a device on the market is affected. There is no MDR deadline until you learn that a device may be affected. QA decides.';
-     r.dl=[{id:'mdr-qa',l:'QA decision: is a device on the market affected?',at:null,when:'QA decision',opt:true},fsca]}
-   else if(sev==='none'){r.st='record';r.why='Not a serious incident. Handle it through complaints and trend reporting.';r.dl=[fsca]}
+   else if(sev==='none'){r.st='record';r.why='Not a serious incident. Handle it through complaints and trend reporting.';r.dl=prov?[qa,fsca]:[fsca]}
    else{const days={unknown:2,serious:15,death:10,public:2}[sev];
      r.st=(dev==='yes'&&sev!=='unknown')?'applies':'assess';
-     r.why=(sev==='unknown'?'Severity not decided. The shortest possible clock (2 days) is shown until you decide severity.':`Report within ${days} days of becoming aware.`)+(mOk?'':' Until you enter when you learned a device may be affected, the clock counts from the incident awareness time.');
-     r.dl=[{id:'mdr-r',l:'Serious incident report',at:atM(days*24),note:[sev==='unknown'?'Shortest possible clock until you decide severity':'',mOk?'Counts from when you learned a device may be affected':'Counts from the incident awareness time'].filter(Boolean).join('. ')},{id:'mdr-f',l:'Final report',at:null,when:'After investigation'},fsca]}
+     r.why=[prov?PROV+'.':'',sev==='unknown'?'Severity not decided. The shortest possible clock (2 days) is shown until you decide severity.':`Report within ${days} days of becoming aware.`,mOk?'':'The clock counts from the incident awareness time until you enter when the company first got information that a device may be affected.'].filter(Boolean).join(' ');
+     r.dl=[{id:'mdr-r',l:'Serious incident report',at:from(mb,days*24),note:[prov?PROV:'',sev==='unknown'?'Shortest possible clock until you decide severity':'',mOk?'Counts from the first information that a device may be affected':'Counts from the incident awareness time'].filter(Boolean).join('. ')},{id:'mdr-f',l:'Final report',at:null,when:'After investigation'},fsca];
+     if(prov)r.dl.unshift(qa)}
    R.push(r)}
   {const r={key:'cra',law:'Art. 14 · from 2026-09-11',dl:[]};
-   const p=v('pde'),ex=v('exploited'),se=v('severe');
+   const p=v('pde'),ex=v('exploited'),se=v('severe'),cb0=own('craAware');
    if(p==='no'){r.st='na';r.why='You do not sell products in CRA scope.'}
    else if(ex==='no'&&se==='no'){r.st='none';r.why='No exploited vulnerability or severe product incident.'}
    else{r.st=(p==='yes'&&(ex==='yes'||se==='yes'))?'applies':'assess';
      r.why=ex==='yes'?'Actively exploited vulnerability in your product.':se==='yes'?'Severe incident affecting the security of your product.':'Possible product security issue. Confirm before the first deadline.';
-     const n=at(72),sentC=sentAt('cra-n'),cb=sentC||n;r.dl=[{id:'cra-ew',l:'Early warning',at:at(24)},{id:'cra-n',l:'Notification',at:n}];
+     const n=from(cb0,72),sentC=sentAt('cra-n'),cb=sentC||n;
+     r.dl=[{id:'cra-ew',l:'Early warning',at:from(cb0,24)},{id:'cra-n',l:'Notification',at:n},{id:'cra-u',l:'Inform impacted users',at:null,when:'Without undue delay',asap:true,note:'After you become aware'}];
      /* 14 days after a fix or mitigation is available, counted to the end of that day. */
      let fx=S.fixdate?new Date(S.fixdate+'T23:59'):null;if(fx&&isNaN(fx))fx=null;if(fx)fx.setDate(fx.getDate()+14);
      if(ex!=='no')r.dl.push({id:'cra-fv',l:'Final report (vulnerability)',at:fx,eod:true,when:'14 days after fix',note:fx?'14 days after the fix or mitigation':'Enter the date a fix or mitigation was available'});
@@ -1124,7 +1194,7 @@ const visGroups=()=>GROUPS.filter(g=>!g.dep||S.a[g.dep]!=='no');
 const lawOf=id=>id.split('-')[0];
 const FDEF=k=>FU.find(x=>x.k===k)||{k,l:FL[k]||k};
 const tplKeys=id=>[...new Set([...TPL[id].text.toString().matchAll(/\bf\('(\w+)'\)/g)].map(m=>m[1]))];
-const NIS2CH='Check the reporting channel Fimea tells you to use.';
+const NIS2CH='Report through the <a href="https://kyberturvallisuuskeskus.fi/fi/ilmoitukset/nis2-direktiivin-mukainen-poikkeamailmoitus" target="_blank" rel="noopener">NCSC-FI NIS2 notification service</a>. It goes to Fimea as your supervisory authority, with a copy to the NCSC-FI CSIRT. Confirm with Fimea that this is their channel.';
 const NOSEND=['mdr-qa'];        /* internal decision: no "Mark as sent" */
 const RECORD=['gdpr-r'];        /* internal record: "Mark as recorded" */
 const closed=id=>!!(S.done[id]||S.skip[id]);
@@ -1171,7 +1241,7 @@ function renderPhases(R){
   const aw=new Date(S.aware);
   const sum={
     1:[val('name')||'No name yet',val('org'),isNaN(aw)?'':'aware '+fmt(aw)].filter(Boolean).join(' · '),
-    2:[`${ts.ans} of ${ts.n} answered`+(ts.uns?`, ${ts.uns} unsure`:''),rep.length?'Report: '+rep.join(', '):'',as.length?'Assess: '+as.join(', '):''].filter(Boolean).join(' · '),
+    2:[`${ts.ans} of ${ts.n} answered`+(ts.uns?`, ${ts.uns} unsure`:''),missingWhy().length?missingWhy().length+' reason'+(missingWhy().length>1?'s':'')+' missing':'',rep.length?'Report: '+rep.join(', '):'',as.length?'Assess: '+as.join(', '):''].filter(Boolean).join(' · '),
     3:list.length?`${done} of ${list.length} done`+(p.length?` · next: ${LAWS[p[0].law].short} ${p[0].l}, ${dueS(p[0])}`:''):'No reports needed',
     4:`${open} still open · ${S.log.length} log entries`};
   for(let i=1;i<=4;i++){
@@ -1205,11 +1275,27 @@ function startNext(){
 }
 
 /* ---------- 2 Triage ---------- */
+/* Answers that remove a reporting duty need a reason and who decided (stored in S.why per question).
+   The note is asked under the question named in q. Triage cannot be finished while one is missing. */
+const STOPS=[
+ {q:'nis2',law:'nis2',on:()=>S.a.nis2==='no'},
+ {q:'harm',law:'nis2',on:()=>S.a.nis2!=='no'&&S.a.disrupt==='no'&&S.a.harm==='no'},
+ {q:'pd',law:'gdpr',on:()=>S.a.pd==='no'},
+ {q:'controller',law:'gdpr',on:()=>S.a.pd!=='no'&&S.a.controller==='no'},
+ {q:'risk',law:'gdpr',on:()=>S.a.pd!=='no'&&S.a.controller!=='no'&&S.a.risk==='no'&&S.a.highrisk!=='yes'},
+ {q:'device',law:'mdr',on:()=>S.a.device==='no'},
+ {q:'severity',law:'mdr',on:()=>S.a.device!=='no'&&S.a.severity==='none'},
+ {q:'severe',law:'cra',on:()=>S.a.pde!=='no'&&S.a.exploited==='no'&&S.a.severe==='no'}
+];
+const stopOn=qid=>{const s=STOPS.find(x=>x.q===qid);return !!(s&&s.on())};
+const whyOf=qid=>String((S.why||{})[qid]||'').trim();
+const missingWhy=()=>STOPS.filter(s=>s.on()&&!whyOf(s.q));
+const whyHtml=(qid,pre)=>stopOn(qid)?`<div class="field whyf"><div class="flab"><label for="${pre}why_${qid}">Why, and who decided? (required)</label>${ib('why','why and who decided')}</div><input id="${pre}why_${qid}" data-why="${qid}" value="${esc(whyOf(qid))}" placeholder="Reason, then name and role of who decided" autocomplete="off"></div>`:'';
 function qHtml(q){
-  const hint=q.hint?`<p class="hint">${esc(q.hint)}</p>`:'';
+  const hint=q.hint?`<p class="hint">${esc(q.hint)}</p>`:'',why=whyHtml(q.id,'q_');
   if(q.type==='time')return `<div class="q"><div class="qh"><label class="qtext" for="q_${q.id}">${esc(q.q)}</label>${ib('q_'+q.id,q.k)}</div>${hint}<input type="datetime-local" class="dtf" id="q_${q.id}" data-k="${q.id}" value="${esc(S[q.id]||'')}"></div>`;
-  if(q.type==='select')return `<div class="q"><div class="qh"><label class="qtext" for="q_${q.id}">${esc(q.q)}</label>${ib('q_'+q.id,q.k)}</div>${hint}<select id="q_${q.id}" name="${q.id}">${SEV.map(([x,l])=>`<option value="${x}" ${S.a[q.id]===x?'selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
-  return `<fieldset class="q" role="radiogroup" aria-labelledby="ql_${q.id}"><div class="qh"><span class="qtext" id="ql_${q.id}">${esc(q.q)}</span>${ib('q_'+q.id,q.k)}</div>${hint}<div class="seg">${Object.entries(ANS).map(([x,l])=>`<label><input type="radio" id="q_${q.id}_${x}" name="${q.id}" value="${x}" ${S.a[q.id]===x?'checked':''}><span>${l}</span></label>`).join('')}</div></fieldset>`;
+  if(q.type==='select')return `<div class="q"><div class="qh"><label class="qtext" for="q_${q.id}">${esc(q.q)}</label>${ib('q_'+q.id,q.k)}</div>${hint}<select id="q_${q.id}" name="${q.id}">${SEV.map(([x,l])=>`<option value="${x}" ${S.a[q.id]===x?'selected':''}>${esc(l)}</option>`).join('')}</select>${why}</div>`;
+  return `<fieldset class="q" role="radiogroup" aria-labelledby="ql_${q.id}"><div class="qh"><span class="qtext" id="ql_${q.id}">${esc(q.q)}</span>${ib('q_'+q.id,q.k)}</div>${hint}<div class="seg">${Object.entries(ANS).map(([x,l])=>`<label><input type="radio" id="q_${q.id}_${x}" name="${q.id}" value="${x}" ${S.a[q.id]===x?'checked':''}><span>${l}</span></label>`).join('')}</div></fieldset>${why}`;
 }
 function renderTriage(){
   const gs=visGroups();let i=gs.findIndex(g=>g.g===S.tg);if(i<0)i=0;S.tg=gs[i].g;
@@ -1218,6 +1304,7 @@ function renderTriage(){
     <div class="tg-top"><span class="eyebrow">Part ${i+1} of ${gs.length}</span><div class="prog">${gs.map((x,j)=>`<button type="button" class="pseg${j<i?' past':''}${j===i?' cur':''}" data-tg="${esc(x.g)}" aria-label="Part ${j+1}: ${esc(x.g)}"${j===i?' aria-current="step"':''}></button>`).join('')}</div></div>
     <h3 class="tg-title" id="tgTitle" tabindex="-1">${ic(g.icon)}${esc(g.g)}</h3>
     ${g.qs.filter(shownQ).map(qHtml).join('')}
+    <p class="status warnmsg" id="tgMsg" aria-live="polite"></p>
     <div class="navrow">${i?`<button type="button" class="btn" id="tgBack" data-tgo="${esc(gs[i-1].g)}">${ic('arrow-left','sm')}Back</button>`:''}<button type="button" class="btn primary" id="tgNext" ${last?'data-done="1"':`data-tgo="${esc(gs[i+1].g)}"`}>${last?'Show my reports':'Next'}${ic('arrow-right','sm')}</button></div></div>`;
 }
 function goGroup(name){
@@ -1229,7 +1316,7 @@ function goGroup(name){
 /* ---------- 3 Report ---------- */
 function renderLaws(R){
   $('#lawSum').innerHTML=R.map(r=>`<span class="lawpill">${lawTag(r.key)}<span class="pill p-${r.st}">${PILL[r.st]}</span></span>`).join('');
-  $('#lawList').innerHTML=R.map(r=>{const L=LAWS[r.key];return `<li class="lc-${r.key} s-${r.st}"><div class="ll-h"><span class="li-ic">${ic(L.icon,'sm')}</span><b>${esc(L.short==='MDR'?'MDR vigilance':L.short)}</b>${ib('reg-'+r.key,L.name)}<span class="pill p-${r.st}">${PILL[r.st]}</span></div><p class="why">${esc(r.why)}</p>${active(r)?`<p class="to">${ic('send','sm')}<span>Report to <b>${esc(L.to)}</b>${r.key==='nis2'?'. '+NIS2CH:''}</span></p>`:''}</li>`}).join('');
+  $('#lawList').innerHTML=R.map(r=>{const L=LAWS[r.key];return `<li class="lc-${r.key} s-${r.st}"><div class="ll-h"><span class="li-ic">${ic(L.icon,'sm')}</span><b>${esc(L.short==='MDR'?'MDR vigilance':L.short)}</b>${ib('reg-'+r.key,L.name)}<span class="pill p-${r.st}">${PILL[r.st]}</span></div><p class="why">${esc(r.why)}</p>${STOPS.some(s=>s.law===r.key&&s.on()&&!whyOf(s.q))?'<p class="why warn">Why, and who decided, is missing. Add it in Triage.</p>':''}${active(r)?`<p class="to">${ic('send','sm')}<span>Report to <b>${esc(L.to)}</b>${r.key==='nis2'?'. '+NIS2CH:''}</span></p>`:''}</li>`}).join('');
 }
 function rowHtml(d){
   const open=S.step===d.id,sent=S.done[d.id],skip=S.skip[d.id],miss=missing(d.id);
@@ -1242,11 +1329,13 @@ function rowHtml(d){
 function ctlHtml(k){const x=FDEF(k),id='fill_'+k;
   return x.type?`<input type="${x.type}" id="${id}" data-k="${k}" value="${esc(S[k]||'')}">`:`<textarea id="${id}" data-k="${k}" rows="2">${esc(S[k]||'')}</textarea>`}
 function ansHtml(a){const q=Q.find(x=>x.id===a);
-  return `<div class="seg" role="radiogroup" aria-label="${esc(q?q.q:a)}">${Object.entries(ANS).map(([x,l])=>`<label><input type="radio" id="fill_a_${a}_${x}" name="fill_a_${a}" data-a="${a}" value="${x}" ${S.a[a]===x?'checked':''}><span>${l}</span></label>`).join('')}</div>`}
+  return `<div class="seg" role="radiogroup" aria-label="${esc(q?q.q:a)}">${Object.entries(ANS).map(([x,l])=>`<label><input type="radio" id="fill_a_${a}_${x}" name="fill_a_${a}" data-a="${a}" value="${x}" ${S.a[a]===x?'checked':''}><span>${l}</span></label>`).join('')}</div>${whyHtml(a,'fill_')}`}
+/* Sent time edited after "Mark as sent": the original click time is kept. */
+const editedAt=id=>S.doneClick&&S.doneClick[id]&&S.done[id]&&S.doneClick[id]!==S.done[id]?S.doneClick[id]:null;
 function stepStatus(id){const sent=S.done[id],skip=S.skip[id],miss=missing(id);
   if(sent)return `${RECORD.includes(id)?'Recorded':'Sent'} ${fmtLog(new Date(sent))}. This is in the decision log.`;
   if(skip)return `Marked as not needed: ${skip}. This is in the decision log.`;
-  if(NOSEND.includes(id))return 'When QA decides a device on the market may be affected, enter the time. The MDR deadline then starts from it.';
+  if(NOSEND.includes(id))return 'The MDR clock is already running provisionally. Record the QA decision: is a device on the market affected, and when did the company first get information about it.';
   return miss?`${miss} required item${miss>1?'s':''} missing. Text in [brackets] still needs your input. You can send now and add details later.`:'All required content is there. Check the wording before sending.'}
 function stepHtml(d){
   const T=TPL[d.id],L=LAWS[d.law],id=d.id,sent=S.done[id],skip=S.skip[id],rec=RECORD.includes(id),nosend=NOSEND.includes(id);
@@ -1258,12 +1347,16 @@ function stepHtml(d){
       if(ok)vline=`<span class="val">${esc(FDEF(n.k).type==='datetime-local'?val(n.k).replace('T',' '):val(n.k))}</span><button type="button" class="linkbtn" data-edit="${key}">Edit</button>`}
     else{field=`<div class="fill" id="wrap_${key}"${ok?' hidden':''}>${ansHtml(n.a)}</div>`;
       if(ok)vline=`<span class="val">${ANS[v(n.a)]}</span><button type="button" class="linkbtn" data-edit="${key}">Change</button>`}
-    return `<li class="${ok?'ok':'miss'}" data-need="${n.k||'a:'+n.a}">${ic(ok?'check':'circle','sm st')}<div class="rq"><div class="rq-l"><span>${esc(n.l)}</span>${ib('ref:'+n.ref,n.l)}</div>${vline?`<div class="rq-v">${vline}</div>`:''}${field}</div></li>`}).join('');
+    return `<li class="${ok?'ok':'miss'}" data-need="${n.k||'a:'+n.a}">${ic(ok?'check':'circle','sm st')}<div class="rq"><div class="rq-l"><span>${esc(n.l)}</span>${n.ref?ib('ref:'+n.ref,n.l):''}</div>${vline?`<div class="rq-v">${vline}</div>`:''}${field}</div></li>`}).join('');
   const needK=new Set(needOf(id).filter(n=>n.k).map(n=>n.k));
+  /* Own awareness time for GDPR, MDR and CRA, editable where their clocks start. */
+  const AWK={gdpr:'gdprAware',mdr:'mdrAware',cra:'craAware'}[d.law];
+  const awField=AWK&&!needK.has(AWK)&&['gdpr-a','gdpr-c','gdpr-s','mdr-r','cra-ew','cra-n','cra-u'].includes(id)?`<div class="field datef"><div class="flab"><label for="fill_${AWK}">${esc(FDEF(AWK).l)}</label>${ib('q_'+AWK,'when the clock starts')}</div><input type="datetime-local" id="fill_${AWK}" data-k="${AWK}" value="${esc(S[AWK]||'')}"><p class="hint">Leave it empty to count from the incident awareness time.</p></div>`:'';
   const extra=tplKeys(id).filter(k=>!needK.has(k)&&k!=='name'&&k!=='org'),empty=extra.filter(k=>!val(k)).length;
   const more=extra.length?`<details class="more"><summary>${ic('pen','sm')}Other details in this draft${empty?` (${empty} empty)`:''}</summary><div class="morebody">${extra.map(k=>`<div class="field"><label for="fill_${k}">${esc(FDEF(k).l)}</label>${ctlHtml(k)}</div>`).join('')}</div></details>`:'';
   const ended=(id==='nis2-f'||id==='nis2-p')?`<div class="field datef"><div class="flab"><label for="fill_ended">Date incident handling ended</label>${ib('d-nis2-p','NIS2 progress report')}</div><input type="date" id="fill_ended" data-k="ended" value="${esc(S.ended||'')}"><p class="hint">Sets the final report date. Leave it empty while you are still handling the incident.</p></div>`:'';
-  const sentBox=sent?`<div class="sentbox"><div class="field"><label for="sent_at">${rec?'Recorded at':'Actual time sent'}</label><input type="datetime-local" id="sent_at" value="${toInput(new Date(sent))}"></div>${rec?'':`<div class="field"><label for="sent_ref">Reference or case number</label><input id="sent_ref" value="${esc(S.ref[id]||'')}" placeholder="For example the case number you got back"></div>`}</div>`:'';
+  const ed=editedAt(id),snap=S.sentText&&S.sentText[id];
+  const sentBox=sent?`<div class="sentbox"><div class="field"><label for="sent_at">${rec?'Recorded at':'Actual time sent'}</label><input type="datetime-local" id="sent_at" value="${toInput(new Date(sent))}">${ed?`<span class="edited">Time edited, marked at ${esc(fmtLog(new Date(ed)))}</span>`:''}</div>${rec?'':`<div class="field"><label for="sent_ref">Reference or receipt number</label><input id="sent_ref" value="${esc(S.ref[id]||'')}" placeholder="For example the receipt or case number you got back"></div>`}${snap?`<details class="more" style="grid-column:1/-1;margin-top:0"><summary>${ic('file','sm')}Show the text as ${rec?'recorded':'sent'}</summary><pre class="draft">${esc(snap)}</pre></details>`:''}</div>`:'';
   const skipForm=d.opt&&!sent&&!skip?`<form class="skipform" id="skipForm" autocomplete="off" hidden><div class="field"><label for="skip_reason">Why is it not needed?</label><input id="skip_reason" placeholder="Short reason, for example: authority has not asked"></div><button type="submit" class="btn primary">Save</button><button type="button" class="btn" id="skipCancel">Cancel</button></form>`:'';
   const acts=[`<button class="btn" id="copyDraft" type="button">${ic('copy','sm')}Copy draft</button>`];
   if(skip)acts.push(`<button class="btn" id="undoSkip" type="button">${ic('reload','sm')}Undo not needed</button>`);
@@ -1275,7 +1368,7 @@ function stepHtml(d){
     <p class="st-to">${ic('send','sm')}<span>${dest}${due?' · '+esc(due):''}</span></p>
     ${sentBox}
     <div class="sgrid">
-      <div><div class="colh"><span class="eyebrow">What the law requires</span>${ib('sec_drafts','what a report must contain')}</div><ul class="req" id="req">${req}</ul>${ended}${more}</div>
+      <div><div class="colh"><span class="eyebrow">What the law requires</span>${ib('sec_drafts','what a report must contain')}</div><ul class="req" id="req">${req}</ul>${awField}${ended}${more}</div>
       <div><div class="colh"><span class="eyebrow">Draft</span></div><pre class="draft" id="draft">${esc(T.text())}</pre></div>
     </div>
     ${skipForm}
@@ -1308,14 +1401,16 @@ function openStep(id){
 function focusFirstRow(){const nx=document.querySelector('#timeline .trow-h');if(nx)nx.focus()}
 function toggleSent(id){
   const lab=stepLab(id),rec=RECORD.includes(id);
-  if(S.done[id]){delete S.done[id];log(`${rec?'Unmarked as recorded':'Unmarked as sent'}: ${lab}`);all();$('#reportMsg').textContent=`${lab} is back on the to-do list.`;const b=$('#markSent');if(b)b.focus();return}
-  S.done[id]=new Date().toISOString();log(`${rec?'Recorded':'Sent'}: ${lab}`);all();
+  if(S.done[id]){delete S.done[id];delete S.doneClick[id];delete S.sentText[id];log(`${rec?'Unmarked as recorded':'Unmarked as sent'}: ${lab}`);all();$('#reportMsg').textContent=`${lab} is back on the to-do list.`;const b=$('#markSent');if(b)b.focus();return}
+  /* Keep the click time and a snapshot of the exact text, so later edits to the facts do not change what was sent. */
+  const t=new Date().toISOString();S.done[id]=t;S.doneClick[id]=t;S.sentText[id]=TPL[id].text();log(`${rec?'Recorded':'Sent'}: ${lab}`);all();
   $('#reportMsg').textContent=`Marked as ${rec?'recorded':'sent'} and logged: ${lab}, ${fmtLog(new Date())}. Correct the time or add a reference below if needed.`;
-  const t=$('#sent_ref')||$('#sent_at');if(t)t.focus();
+  const tf=$('#sent_ref')||$('#sent_at');if(tf)tf.focus();
 }
 function setSentTime(id,value){
   const d=new Date(value);if(!value||isNaN(d))return;
-  S.done[id]=d.toISOString();log(`${RECORD.includes(id)?'Recorded':'Sent'} time changed: ${stepLab(id)}: ${fmtLog(d)}`);all();
+  if(!S.doneClick[id])S.doneClick[id]=S.done[id];
+  S.done[id]=d.toISOString();log(`${RECORD.includes(id)?'Recorded':'Sent'} time changed: ${stepLab(id)}: ${fmtLog(d)} (marked at ${fmtLog(new Date(S.doneClick[id]))})`);all();
 }
 function setRef(id,value){
   const x=value.trim();if((S.ref[id]||'')===x)return;
@@ -1328,10 +1423,11 @@ function skipStep(id,reason){
 function unskip(id){delete S.skip[id];log(`Undo not needed: ${stepLab(id)}`);all();$('#reportMsg').textContent=`${stepLab(id)} is back on the to-do list.`}
 
 /* ---------- 4 Close ---------- */
-const FIRST=['nis2-ew','nis2-n','gdpr-a','gdpr-c','gdpr-s','mdr-r','cra-ew','cra-n'];
+const FIRST=['nis2-ew','nis2-n','nis2-c','gdpr-a','gdpr-c','gdpr-s','mdr-r','cra-ew','cra-n','cra-u'];
 function renderClose(R){
   const list=steps(R);
-  [['#c_ended','ended'],['#c_fixdate','fixdate']].forEach(([s,k])=>{const el=$(s);if(el!==document.activeElement)el.value=S[k]||''});
+  [['#c_ended','ended'],['#c_fixdate','fixdate'],['#c_cause','cause'],['#c_capa','capa'],['#c_lessons','lessons']].forEach(([s,k])=>{const el=$(s);if(el!==document.activeElement)el.value=S[k]||''});
+  renderFp();
   $('#fixBlock').hidden=!list.some(d=>d.id==='cra-fv');
   const rest=list.filter(d=>!closed(d.id)),early=rest.filter(d=>FIRST.includes(d.id)).sort(byTime);
   const open=rest.filter(d=>!FIRST.includes(d.id)).sort(byTime);
@@ -1343,27 +1439,38 @@ function renderClose(R){
 
 /* ---------- Compliance summary ---------- */
 const dur=ms=>{const h=Math.round(ms/H);return h>=48?Math.round(h/24)+' days':Math.max(h,1)+' h'};
+/* Finnish section next to the NIS2 article: early warning and notification 11 §, progress 12 §, final 13 §, customer notices 14 §. */
+const FIS={'nis2-ew':'11 §','nis2-n':'11 §','nis2-i':'12 §','nis2-p':'12 §','nis2-f':'13 §','nis2-c':'14 §','nis2-t':'14 §'};
+const whyNotes=law=>STOPS.filter(s=>s.law===law&&s.on()).map(s=>{const q=Q.find(x=>x.id===s.q);return `${q.k}: ${whyOf(s.q)||'reason and decider not recorded'}`}).join('. ');
 function duties(R){
   const now=Date.now(),rows=[];
   R.forEach(r=>{
-    if(!(active(r)||r.st==='record')){rows.push({law:r.key,duty:'No reporting duty',cite:'',due:'',done:'',res:'nr',txt:PILL[r.st],why:r.why});return}
+    const notes=whyNotes(r.key);
+    if(!(active(r)||r.st==='record')){rows.push({law:r.key,duty:'No reporting duty',cite:'',due:'',done:'',res:'nr',txt:PILL[r.st],why:r.why+(notes?' Decision: '+notes:'')});return}
+    if(notes)rows.push({law:r.key,duty:'Duty removed after triage',cite:'',due:'',done:'',res:'nr',txt:'Not required',why:'Decision: '+notes});
     r.dl.filter(d=>TPL[d.id]).forEach(d=>{
-      const h=HELP['d-'+d.id],ref=h&&h.r&&REF[h.r[0]],sent=S.done[d.id]?new Date(S.done[d.id]):null,skip=S.skip[d.id];
+      const h=HELP['d-'+d.id],ref=h&&h.r&&REF[h.r[0]],sent=S.done[d.id]?new Date(S.done[d.id]):null,skip=S.skip[d.id],ed=editedAt(d.id);
       let res,txt;
       if(skip){res='nr';txt='Not needed'}
       else if(sent){if(d.at&&sent>d.at){res='late';txt='Late by '+dur(sent-d.at)}else{res='ok';txt=d.at?'On time':(RECORD.includes(d.id)?'Recorded':'Done')}}
       else if(d.at&&now>d.at){res='over';txt='Overdue'}
       else{res='open';txt='Open'}
-      rows.push({law:r.key,duty:TPL[d.id].title,cite:ref?ref.cite:'',due:d.at?dueS(d):(d.when||''),done:sent?fmtLog(sent)+(S.ref[d.id]?', ref '+S.ref[d.id]:''):'',res,txt,why:skip?'Reason: '+skip:''});
+      rows.push({law:r.key,duty:TPL[d.id].title,cite:(ref?ref.cite:'')+(FIS[d.id]?' · Cybersecurity Act '+FIS[d.id]:''),due:d.at?dueS(d):(d.when||''),
+        done:sent?fmtLog(sent)+(S.ref[d.id]?', ref '+S.ref[d.id]:'')+(ed?` (time edited, marked at ${fmtLog(new Date(ed))})`:''):'',res,txt,why:skip?'Reason: '+skip:''});
     });
   });
+  /* Internal duties after the incident (no legal quote: ISO texts are copyrighted). */
+  const ca=!!(val('cause')&&val('capa')),le=!!val('lessons');
+  rows.push({law:null,duty:'Root cause and actions',cite:'ISO 27001 A.5.27, ISO 13485 8.5.2',due:'After the incident',done:'',res:ca?'ok':'open',txt:ca?'Done':'Open',why:''});
+  rows.push({law:null,duty:'Lessons learned',cite:'ISO 27001 A.5.27',due:'After the incident',done:'',res:le?'ok':'open',txt:le?'Done':'Open',why:''});
   return rows;
 }
+const intTag='<span class="lc-int"><span class="lawtag">Internal</span></span>';
 const RCLS={ok:'r-ok',late:'r-late',over:'r-late',open:'r-open',nr:'r-nr'};
 function renderComp(R){
   const rows=duties(R),c=k=>rows.filter(x=>x.res===k).length;
   $('#compHead').innerHTML=`<span><b>${c('ok')}</b> met</span><span><b>${c('late')+c('over')}</b> late or overdue</span><span><b>${c('open')}</b> open</span><span><b>${c('nr')}</b> not required, with reason</span><span><b>${S.log.length}</b> log entries</span>`;
-  $('#compBody').innerHTML=rows.map(x=>`<tr><td>${lawTag(x.law)}</td><td><b>${esc(x.duty)}</b>${x.cite?`<span class="cite">${esc(x.cite)}</span>`:''}${x.why?`<span class="why">${esc(x.why)}</span>`:''}</td><td>${esc(x.due)}</td><td>${esc(x.done)}</td><td><span class="rpill ${RCLS[x.res]}">${esc(x.txt)}</span></td></tr>`).join('');
+  $('#compBody').innerHTML=rows.map(x=>`<tr><td>${x.law?lawTag(x.law):intTag}</td><td><b>${esc(x.duty)}</b>${x.cite?`<span class="cite">${esc(x.cite)}</span>`:''}${x.why?`<span class="why">${esc(x.why)}</span>`:''}</td><td>${esc(x.due)}</td><td>${esc(x.done)}</td><td><span class="rpill ${RCLS[x.res]}">${esc(x.txt)}</span></td></tr>`).join('');
   [['#c_owner','owner'],['#c_signer','signName']].forEach(([s,k])=>{const el=$(s);if(el!==document.activeElement)el.value=S[k]||''});
   const signed=!!S.signAt,b=$('#signBtn');
   b.querySelector('span').textContent=signed?'Undo sign-off':'Sign off';b.classList.toggle('primary',!signed);
@@ -1372,8 +1479,17 @@ function renderComp(R){
 function compText(R){
   const rows=duties(R),aw=new Date(S.aware);
   return [`Compliance summary: ${S.name||'[incident]'}`,`Organisation: ${S.org||'[organisation]'}`,`Became aware: ${isNaN(aw)?'':fmtLog(aw)}`,`Incident owner: ${S.owner||'[not set]'}`,`Management sign-off: ${S.signAt?S.signName+', '+fmtLog(new Date(S.signAt)):'not signed'}`,'',
-    ...rows.map(x=>`${LAWS[x.law].short} | ${x.duty}${x.cite?' ('+x.cite+')':''} | due: ${x.due||'-'} | done: ${x.done||'-'} | ${x.txt}${x.why?' | '+x.why:''}`),
+    ...rows.map(x=>`${x.law?LAWS[x.law].short:'Internal'} | ${x.duty}${x.cite?' ('+x.cite+')':''} | due: ${x.due||'-'} | done: ${x.done||'-'} | ${x.txt}${x.why?' | '+x.why:''}`),
     '',`Decision log: ${S.log.length} entries (see the log for every answer and decision with time).`,'Generated by Incident Clock (demo). Legal texts: EUR-Lex and Finlex, 2026-10-16.'].join('\n');
+}
+/* Evidence copy: the incident without screen state (open phase, open step), so the fingerprint only changes when the record changes. */
+function evidenceJSON(x){const {phase,step,tg,reached,example,...rest}=x;return JSON.stringify(rest,null,2)}
+let fpSeq=0;
+function renderFp(){
+  const w=$('#fpWrap');
+  if(!(window.crypto&&crypto.subtle&&window.TextEncoder)){w.hidden=true;return}
+  const my=++fpSeq;
+  try{crypto.subtle.digest('SHA-256',new TextEncoder().encode(evidenceJSON(S))).then(b=>{if(my!==fpSeq)return;$('#fp').textContent=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');w.hidden=false},()=>{w.hidden=true})}catch(e){w.hidden=true}
 }
 function renderLog(){
   const items=[...S.log].reverse();
@@ -1533,7 +1649,7 @@ function copy(text,el,status){
 }
 
 /* ---------- Events ---------- */
-const TIMED={aware:'Awareness time',fixdate:'Fix or mitigation date',ended:'Handling ended date',mdrAware:'MDR awareness time'};
+const TIMED={aware:'Awareness time',fixdate:'Fix or mitigation date',ended:'Handling ended date',mdrAware:'MDR awareness time',gdprAware:'GDPR awareness time',craAware:'CRA awareness time'};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-help]');if(b){e.preventDefault();openHelp(b.dataset.help)}
   if(!e.target.closest('#menu'))$('#menu').open=false});
 $('#dClose').addEventListener('click',closeHelp);
@@ -1566,7 +1682,12 @@ $('#startForm').addEventListener('change',e=>{if(e.target.dataset.k==='aware'){l
 $('#startForm').addEventListener('submit',e=>{e.preventDefault();startNext()});
 
 /* 2 Triage */
+/* Reason and decider for answers that remove a duty: saved while typing, logged when the field is left. */
+const whyInput=e=>{const q=e.target.dataset.why;if(!q)return false;S.why=S.why||{};S.why[q]=e.target.value;edited();save();return true};
+const whyChange=e=>{const q=e.target.dataset.why;if(!q)return false;const Qq=Q.find(x=>x.id===q);log(`Reason for "${Qq.k}": ${e.target.value.trim()||'(empty)'}`);all();return true};
+$('#triage').addEventListener('input',e=>{whyInput(e)});
 $('#triage').addEventListener('change',e=>{
+  if(whyChange(e))return;
   const k=e.target.dataset.k;
   if(k){S[k]=e.target.value;log(`${TIMED[k]} set to ${e.target.value.replace('T',' ')||'(empty)'}`);edited();all();return}
   const id=e.target.name;if(!id)return;S.a[id]=e.target.value;const q=Q.find(x=>x.id===id);
@@ -1574,7 +1695,8 @@ $('#triage').addEventListener('change',e=>{
   log(`${q.k}: ${label}`);edited();all();
 });
 $('#triage').addEventListener('click',e=>{const b=e.target.closest('[data-tgo],[data-tg],[data-done]');if(!b)return;
-  if(b.dataset.done){S.reached=Math.max(S.reached,3);openPhase(3);return}
+  if(b.dataset.done){const m=missingWhy();if(m.length){const g=GROUPS.find(x=>x.qs.some(q=>q.id===m[0].q));goGroup(g.g);$('#tgMsg').textContent=`Write why, and who decided, for ${m.length===1?'the answer that removes':m.length+' answers that remove'} a reporting duty. Then you can finish triage.`;const f=$('#q_why_'+m[0].q);if(f)f.focus();return}
+    S.reached=Math.max(S.reached,3);openPhase(3);return}
   goGroup(b.dataset.tgo||b.dataset.tg)});
 
 /* 3 Report */
@@ -1593,8 +1715,8 @@ $('#timeline').addEventListener('click',e=>{
 $('#timeline').addEventListener('submit',e=>{if(e.target.id!=='skipForm')return;e.preventDefault();
   const x=$('#skip_reason').value.trim();if(!x){$('#draftStatus').textContent='Write a short reason first. It goes in the decision log.';$('#skip_reason').focus();return}
   skipStep(S.step,x)});
-$('#timeline').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;S[k]=e.target.value;edited();if(!TIMED[k])refreshStep();save()});
-$('#timeline').addEventListener('change',e=>{const t=e.target;
+$('#timeline').addEventListener('input',e=>{if(whyInput(e))return;const k=e.target.dataset.k;if(!k)return;S[k]=e.target.value;edited();if(!TIMED[k])refreshStep();save()});
+$('#timeline').addEventListener('change',e=>{const t=e.target;if(whyChange(e))return;
   if(t.dataset.k&&TIMED[t.dataset.k]){log(`${TIMED[t.dataset.k]} set to ${t.value.replace('T',' ')||'(empty)'}`);all();return}
   if(t.dataset.a){const id=t.dataset.a;S.a[id]=t.value;const q=Q.find(x=>x.id===id);log(`${q.k}: ${ANS[t.value]}`);edited();all()}});
 /* Actual sent time and reference: saved when the field is left or Enter is pressed. */
@@ -1617,13 +1739,16 @@ $('#signBtn').addEventListener('click',()=>{
 $('#copyComp').addEventListener('click',()=>{const t=compText(evaluate()),out=$('#compOut');
   const fail=()=>{out.hidden=false;out.textContent=t;const r=document.createRange();r.selectNodeContents(out);const s=getSelection();s.removeAllRanges();s.addRange(r);$('#compStatus').textContent='Selected. Press Ctrl+C to copy.'};
   try{navigator.clipboard.writeText(t).then(()=>{$('#compStatus').textContent='Summary copied.'},fail)}catch(e){fail()}});
+[['#c_cause','Root cause'],['#c_capa','Corrective and preventive actions'],['#c_lessons','Lessons learned']].forEach(([s,lab])=>{const el=$(s),k=el.dataset.k;
+  el.addEventListener('input',()=>{S[k]=el.value;edited();save()});
+  el.addEventListener('change',()=>{log(`${lab} updated`);all()})});
 ['#c_ended','#c_fixdate'].forEach(s=>{const el=$(s),k=el.dataset.k;
   el.addEventListener('input',()=>{S[k]=el.value;edited();save()});
   el.addEventListener('change',()=>{log(`${TIMED[k]} set to ${el.value||'(empty)'}`);all()})});
 $('#closeOpen').addEventListener('click',e=>{const b=e.target.closest('[data-goto-step]');if(b)openStep(b.dataset.gotoStep)});
 $('#noteForm').addEventListener('submit',e=>{e.preventDefault();const x=$('#logNote').value.trim();if(!x)return;log(x);$('#logNote').value='';edited();all();$('#logStatus').textContent='Note added.'});
 $('#copyLog').addEventListener('click',()=>{const txt=S.log.map(e=>`${fmtLog(new Date(e.t))}  ${e.x}`).join('\n');copy(txt,$('#log'),$('#logStatus'))});
-$('#copyJson').addEventListener('click',()=>{const txt=JSON.stringify(S,null,2);$('#jsonOut').textContent=txt;copy(txt,$('#jsonOut'),$('#jsonStatus'))});
+$('#copyJson').addEventListener('click',()=>{const txt=evidenceJSON(S);$('#jsonOut').textContent=txt;copy(txt,$('#jsonOut'),$('#jsonStatus'))});
 /* Close and delete, with in-page confirmation */
 $('#closeBtn').addEventListener('click',askClose);
 $('#closeYes').addEventListener('click',()=>{const x=$('#closeReason').value.trim();if(!x){$('#closeCfText').querySelector('b').textContent='Write a short reason first.';$('#closeReason').focus();return}closeInc(x)});
