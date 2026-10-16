@@ -529,7 +529,7 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
       <summary class="btn ghost">More<svg class="i sm chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
       <div class="menu-pop">
         <button class="menu-item" id="btnNew" type="button"><svg class="i sm"><use href="#i-plus"/></svg>New incident</button>
-        <button class="menu-item" id="btnProfile" type="button"><svg class="i sm"><use href="#i-building"/></svg>Company profile</button>
+        <button class="menu-item" id="btnProfile" type="button" hidden><svg class="i sm"><use href="#i-building"/></svg>Company profile</button>
         <button class="menu-item" id="btnExample" type="button"><svg class="i sm"><use href="#i-reload"/></svg>Load example</button>
       </div>
     </details>
@@ -1412,10 +1412,12 @@ function ctlHtml(k){const x=FDEF(k),id='fill_'+k;
 function ansHtml(a){const q=Q.find(x=>x.id===a);
   return `<div class="seg" role="radiogroup" aria-label="${esc(q?q.q:a)}">${Object.entries(ANS).map(([x,l])=>`<label><input type="radio" id="fill_a_${a}_${x}" name="fill_a_${a}" data-a="${a}" value="${x}" ${S.a[a]===x?'checked':''}><span>${l}</span></label>`).join('')}</div>${whyHtml(a,'fill_')}`}
 /* ---------- NIS2 official form (Traficom e-services, NIS2-lomake) ----------
-   NIS2 reports are made in the official online form. These steps show what the form asks, with the answers the tool already has
-   and a Copy button for each, then "Mark as done" with the time and the confirmation number. The legal checklist becomes advice. */
+   NIS2 reports are made in the official online form (English or Finnish). The tool only says which report is due and when,
+   links to the form and records that it was done (time and optional confirmation number). Nothing is typed twice. */
 const FORM_URL='https://eservices.traficom.fi/ContactForms/form/NIS2-Ilmoitus?langid=fi';
+const FORM_URL_EN='https://eservices.traficom.fi/ContactForms/form/NIS2-Ilmoitus?langid=en';
 const FORMS={'nis2-ew':'Teen ensi-ilmoituksen','nis2-n':'Teen jatkoilmoituksen','nis2-i':'Annan väliraportin','nis2-p':'Annan väliraportin','nis2-f':'Annan loppuraportin'};
+const FORMS_EN={'nis2-ew':'Make a first-time notification','nis2-n':'Make a follow-up notification','nis2-i':'I will provide an interim report','nis2-p':'I will provide an interim report','nis2-f':'I will provide a final report'};
 /* Company profile: reporter details, stored once in this browser and shared by all incidents. */
 const PKEY='incident-clock-profile';
 const PF=[['org','Organisaation nimi','Organisation name'],['ytunnus','Y-tunnus','Business ID'],['first','Etunimi','First name'],['last','Sukunimi','Last name'],['title','Tehtävänimike','Job title'],
@@ -1489,7 +1491,7 @@ const editedAt=id=>S.doneClick&&S.doneClick[id]&&S.done[id]&&S.doneClick[id]!==S
 function stepStatus(id){const sent=S.done[id],skip=S.skip[id],miss=missing(id);
   if(sent)return `${RECORD.includes(id)?'Recorded':FORMS[id]?'Reported in the official service':'Sent'} ${fmtLog(new Date(sent))}. This is in the decision log.`;
   if(skip)return `Marked as not needed: ${skip}. This is in the decision log.`;
-  if(FORMS[id])return 'Report in the official service, then mark it as done here with the confirmation number.';
+  if(FORMS[id])return 'Report in the official form, then mark it as done here.';
   if(NOSEND.includes(id))return 'The MDR clock is already running provisionally. Record the QA decision: is a device on the market affected, and when did the company first get information about it.';
   return miss?`${miss} required item${miss>1?'s':''} missing. Text in [brackets] still needs your input. You can send now and add details later.`:'All required content is there. Check the wording before sending.'}
 function stepHtml(d){
@@ -1517,18 +1519,15 @@ function stepHtml(d){
   if(fm){
     const fdest=`Send to <b>${esc(L.to)}</b> through the official NIS2 form. Confirm with Fimea that this is their channel.`;
     /* Official form step: open the form, copy the answers, mark as done with the confirmation number. */
-    const doneForm=!sent&&!skip?`<form class="doneform" id="doneForm" autocomplete="off" hidden><div class="field"><label for="done_at">Time reported</label><input type="datetime-local" id="done_at"></div><div class="field"><label for="done_ref">Confirmation or reference number</label><input id="done_ref" placeholder="From the Vahvistus (confirmation) page"></div><button type="submit" class="btn primary">Save</button><button type="button" class="btn" id="doneCancel">Cancel</button></form>`:'';
+    const doneForm=!sent&&!skip?`<form class="doneform" id="doneForm" autocomplete="off" hidden><div class="field"><label for="done_at">Time reported</label><input type="datetime-local" id="done_at"></div><div class="field"><label for="done_ref">Confirmation number (optional)</label><input id="done_ref" placeholder="From the form's confirmation page"></div><button type="submit" class="btn primary">Save</button><button type="button" class="btn" id="doneCancel">Cancel</button></form>`:'';
     const facts=[];if(skip)facts.push(`<button class="btn" id="undoSkip" type="button">${ic('reload','sm')}Undo not needed</button>`);
     else{if(d.opt&&!sent)facts.push(`<button class="btn" id="skipBtn" type="button">${ic('x','sm')}Not needed</button>`);
       facts.push(sent?`<button class="btn" id="markSent" type="button">${ic('reload','sm')}Undo done</button>`:`<button class="btn" id="markForm" type="button">${ic('check','sm')}Mark as done</button>`)}
     return `<div class="st-head"><h3>${esc(T.title)}</h3>${ib('d-'+id,L.short+' '+T.title)}</div>
     <p class="st-to">${ic('send','sm')}<span>${fdest}${due?' · '+esc(due):''}</span></p>
     ${sentBox}
-    <div class="formcta"><a class="btn${sent?'':' primary'}" href="${FORM_URL}" target="_blank" rel="noopener">${ic('ext','sm')}Report in the official service</a><p class="hint">Choose: <b lang="fi">${esc(fm)}</b>. The form is in Finnish. Copy the answers below into it, then mark the step as done.</p></div>
-    <div><div class="colh"><span class="eyebrow">What the form asks</span></div><p class="status" id="formStatus" aria-live="polite"></p>${formListHtml(id)}</div>
+    <div class="formcta"><span class="actions"><a class="btn${sent?'':' primary'}" href="${FORM_URL_EN}" target="_blank" rel="noopener" lang="en">${ic('ext','sm')}Open the official form</a><a class="btn" href="${FORM_URL}" target="_blank" rel="noopener" lang="fi">Suomeksi</a></span><p class="hint">In the form, choose <b>${esc(FORMS_EN[id])}</b> (<span lang="fi">${esc(fm)}</span>). The form asks everything it needs. When you have sent it, mark the step as done here.</p></div>
     ${ended}
-    <details class="more"><summary>${ic('list','sm')}What the law requires (advice)</summary><p class="hint">The official form guides you. This list is only a check, nothing here blocks the report.</p><ul class="req" id="req">${req}</ul></details>
-    <details class="more"><summary>${ic('pen','sm')}Prepare text first (optional)</summary><p class="hint">If you want to write before you open the form. Copy parts of it into the form.</p><pre class="draft" id="draft">${esc(T.text())}</pre>${more}<div class="navrow" style="margin-top:8px"><button class="btn" id="copyDraft" type="button">${ic('copy','sm')}Copy text</button></div></details>
     ${skipForm}${doneForm}
     <div class="st-act"><span class="status" id="draftStatus" aria-live="polite">${esc(stepStatus(id))}</span><span class="actions">${facts.join('')}</span></div>`;
   }
@@ -1621,7 +1620,7 @@ function toggleSent(id){
 function markFormDone(id,atVal,def,ref){
   const now=new Date().toISOString(),changed=atVal&&atVal!==def,t=changed?new Date(atVal):null;
   if(changed&&isNaN(t)){$('#draftStatus').textContent='Enter a valid time.';return}
-  S.done[id]=t?t.toISOString():now;S.doneClick[id]=now;S.sentText[id]=formText(id);if(ref)S.ref[id]=ref;edited();
+  S.done[id]=t?t.toISOString():now;S.doneClick[id]=now;delete S.sentText[id];if(ref)S.ref[id]=ref;edited();
   log(`Reported in the official service: ${stepLab(id)}${t?', reported at '+fmtLog(t):''}${ref?', confirmation '+ref:''}`);all();
   $('#reportMsg').textContent=`Marked as done and logged: ${stepLab(id)}, ${fmtLog(new Date(S.done[id]))}${ref?', confirmation '+ref:''}.`;
 }
