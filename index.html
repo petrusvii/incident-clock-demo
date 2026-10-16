@@ -1,0 +1,1474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<!-- Incident Clock (c) 2026 Petrus Viitanen. All rights reserved. Confidential demo, not for distribution or reuse. -->
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+<title>Incident Clock</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;1,400&display=swap">
+<style>
+/* Layout: a calm, chronological flow. A slim sticky bar shows the incident and the next deadline. Four phases (Start, Triage, Report, Close); only the current one is open. The Rulebook is a separate view. A side drawer shows the exact legal text for any (i). */
+:root{
+  --bg:#f2f5f6; --surface:#ffffff; --sunk:#e7edef; --line:#d2dcdf; --fg:#13232b; --muted:#566a73;
+  --accent:#0b6b7a; --accent-ink:#ffffff; --accent-soft:#dcedf0;
+  --crit:#b42318; --crit-bg:#fdecea; --warn:#9a5600; --warn-bg:#fff1dc; --ok:#1d7446; --ok-bg:#e4f3ea; --idle-bg:#edf1f2;
+  --law-nis2:#2f5fb3; --law-gdpr:#7a4bb0; --law-mdr:#b2364f; --law-cra:#a35a12; --law-fi:#1f6f8b;
+  --mark:#fff0b8; --shade:rgba(10,24,30,.35); --lift:rgba(10,24,30,.06);
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e171b; --surface:#15222a; --sunk:#1b2b33; --line:#2a3e47; --fg:#e2ebee; --muted:#93a7af;
+  --accent:#55bccb; --accent-ink:#04262c; --accent-soft:#163940;
+  --crit:#ff8b80; --crit-bg:#3b1714; --warn:#f3b55c; --warn-bg:#36270e; --ok:#72d39d; --ok-bg:#12301f; --idle-bg:#1a282e;
+  --law-nis2:#86a8ec; --law-gdpr:#c3a0ec; --law-mdr:#f08aa0; --law-cra:#f0a865; --law-fi:#73c2dc;
+  --mark:#5a4a12; --shade:rgba(0,0,0,.55); --lift:rgba(0,0,0,.3);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e171b; --surface:#15222a; --sunk:#1b2b33; --line:#2a3e47; --fg:#e2ebee; --muted:#93a7af;
+  --accent:#55bccb; --accent-ink:#04262c; --accent-soft:#163940;
+  --crit:#ff8b80; --crit-bg:#3b1714; --warn:#f3b55c; --warn-bg:#36270e; --ok:#72d39d; --ok-bg:#12301f; --idle-bg:#1a282e;
+  --law-nis2:#86a8ec; --law-gdpr:#c3a0ec; --law-mdr:#f08aa0; --law-cra:#f0a865; --law-fi:#73c2dc;
+  --mark:#5a4a12; --shade:rgba(0,0,0,.55); --lift:rgba(0,0,0,.3);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.view{display:flex;flex-direction:column;gap:14px;min-width:0}
+h1,h2,h3,h4{margin:0;text-wrap:balance;font-weight:600}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+button{font:inherit;cursor:pointer;color:inherit}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+.i.sm{width:15px;height:15px}
+.i.lg{width:22px;height:22px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.hint{margin:0;font-size:12.5px;color:var(--muted)}
+.status{font-size:12.5px;color:var(--muted)}
+.empty{margin:0;color:var(--muted);font-size:13.5px}
+.opt{font-weight:400;color:var(--muted)}
+
+/* info button */
+.ib{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:0;background:transparent;color:var(--accent);padding:0;flex:none;vertical-align:middle}
+.ib{position:relative}.ib::after{content:"";position:absolute;inset:-8px}
+.ib:hover{background:var(--accent-soft)}
+.ib .i{width:17px;height:17px}
+
+/* buttons, tags, pills */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:8px 14px;border-radius:7px;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:6px 10px}
+.btn.ghost:hover{background:var(--sunk);color:var(--fg)}
+.linkbtn{border:0;background:transparent;color:var(--accent);font-size:12.5px;font-weight:600;padding:2px 4px;border-radius:4px;flex:none}
+.linkbtn{position:relative}.linkbtn::after{content:"";position:absolute;inset:-10px -4px}
+.linkbtn:hover{background:var(--accent-soft)}
+.tag{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.p-applies{background:var(--crit-bg);color:var(--crit)}
+.p-assess{background:var(--warn-bg);color:var(--warn)}
+.p-record{background:var(--ok-bg);color:var(--ok)}
+.p-none,.p-na{background:var(--idle-bg);color:var(--muted)}
+.lawtag{font-size:12px;font-weight:700;letter-spacing:.04em;padding:1px 7px;border-radius:4px;color:var(--lc);background:color-mix(in srgb,var(--lc) 13%,transparent);white-space:nowrap}
+.lc-nis2{--lc:var(--law-nis2)}.lc-gdpr{--lc:var(--law-gdpr)}.lc-mdr{--lc:var(--law-mdr)}.lc-cra{--lc:var(--law-cra)}.lc-fi{--lc:var(--law-fi)}
+.count{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.count[data-st="crit"]{color:var(--crit)}.count[data-st="warn"]{color:var(--warn)}.count[data-st="ok"]{color:var(--ok)}
+
+/* form controls */
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field>label,.flab{font-size:12.5px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:2px;min-height:24px}
+input:not([type="radio"]),textarea,select{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:60px}
+select{width:auto;max-width:100%;align-self:flex-start}
+
+/* top */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.mark{width:32px;height:32px;border-radius:8px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.mark .i{width:20px;height:20px;stroke-width:2}
+.brand h1{font-size:18px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.brand p{margin:0;color:var(--muted);font-size:12.5px}
+.nav{display:flex;gap:2px;background:var(--sunk);border-radius:9px;padding:3px}
+.nav button{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--muted);padding:6px 12px;border-radius:7px;font-weight:600;font-size:13px}
+.nav button[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px var(--lift)}
+.count-badge{font-size:12px;font-weight:600;background:var(--crit-bg);color:var(--crit);border-radius:99px;padding:0 7px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+/* sticky bar */
+.bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar-inc{min-width:0;flex:1}
+.bar-name{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-aware{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-next{flex:none;display:flex;flex-direction:column;align-items:flex-end;border:0;background:transparent;text-align:right;padding:4px 8px;border-radius:8px;max-width:62%;min-width:0}
+.bar-next:not([disabled]):hover{background:var(--sunk)}
+.bar-next[disabled]{cursor:default}
+.bn-lab{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.bn-count{font-size:20px;line-height:1.2}
+.bn-what{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.example-note{margin:0;font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+
+/* phases */
+.phases{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.phase{border-radius:12px;border:1px solid transparent;scroll-margin-top:84px}
+.phase.cur{background:var(--surface);border-color:var(--line);box-shadow:0 1px 3px var(--lift)}
+.ph-btn{width:100%;display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border:0;background:transparent;text-align:left;border-radius:12px}
+.phase:not(.cur):not(.locked) .ph-btn:hover{background:var(--sunk)}
+.phase.cur .ph-btn{cursor:default}
+.phase.locked .ph-btn{cursor:not-allowed}
+.phase.locked .ph-txt{opacity:.6}
+.num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:13px;border:1.5px solid var(--line);color:var(--muted);background:var(--bg)}
+.phase.cur .num{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.phase.done .num{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+.ph-txt{display:flex;flex-direction:column;min-width:0}
+.ph-title{font-weight:600;font-size:15px}
+.ph-sum{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-act{font-size:12.5px;color:var(--accent);font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.phase.locked .ph-act{color:var(--muted)}
+.ph-body{padding:0 18px 20px 54px;display:flex;flex-direction:column;gap:16px}
+.lead{margin:0;color:var(--muted);font-size:13.5px;max-width:70ch}
+.navrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.navrow>.btn:last-child{margin-left:auto}
+
+/* start */
+.sform{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px 16px}
+.s2{grid-column:span 2}.s4{grid-column:span 4}.s6{grid-column:1/-1}
+
+/* triage */
+.tg-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.prog{display:flex;gap:4px;flex:1;min-width:120px;max-width:240px}
+.pseg{flex:1;height:40px;border:0;padding:0;background:transparent;position:relative;border-radius:4px}
+.pseg::before{content:"";position:absolute;left:0;right:0;top:17px;height:6px;border-radius:3px;background:var(--line)}
+.pseg.past::before{background:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.pseg.cur::before{background:var(--accent)}
+.tg-title{font-size:17px;display:flex;align-items:center;gap:8px}
+.tg-title .i{color:var(--accent)}
+.tg-title:focus{outline:none}
+.qs{display:flex;flex-direction:column;gap:20px}
+.q{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;min-width:0}
+.qh{display:flex;align-items:flex-start;gap:4px;justify-content:space-between}
+.qtext{font-weight:500;line-height:1.4;font-size:14.5px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;align-self:flex-start;background:var(--bg)}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;width:100%;height:100%}
+.seg span{display:block;padding:7px 16px;min-width:64px;text-align:center;font-size:13.5px;border-left:1px solid var(--line);color:var(--muted)}
+.seg label:first-child span{border-left:0}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* report: which laws apply */
+.lawsum{border-radius:10px;background:var(--bg)}
+.lawsum>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:10px 12px;border-radius:10px}
+.lawsum>summary::-webkit-details-marker{display:none}
+.lawpills{display:flex;flex-wrap:wrap;gap:6px 12px;flex:1 1 240px;min-width:0}
+.lawpill{display:inline-flex;align-items:center;gap:5px}
+.lawpill .pill{font-size:12px;padding:2px 7px}
+.lawsum .chev{color:var(--muted)}
+.lawsum[open] .chev{transform:rotate(180deg)}
+.lawlist{list-style:none;margin:0;padding:2px 12px 14px;display:flex;flex-direction:column;gap:14px}
+.lawlist li{display:flex;flex-direction:column;gap:3px}
+.ll-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ll-h .li-ic{color:var(--lc);display:inline-flex}
+.ll-h .pill{margin-left:auto}
+.why{margin:0;font-size:13px}
+.to{margin:0;font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:flex-start}
+.to b{color:var(--fg);font-weight:500}
+.lawlist li.s-none,.lawlist li.s-na{color:var(--muted)}
+.lawlist li.s-none .li-ic,.lawlist li.s-na .li-ic{filter:grayscale(1);opacity:.6}
+
+/* report: timeline */
+#timeline{display:flex;flex-direction:column;gap:18px}
+.band{display:flex;flex-direction:column;gap:6px}
+.band-h{display:flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:0 4px}
+.band-h .n{font-family:var(--mono);letter-spacing:0;font-weight:500}
+.b-over .band-h{color:var(--crit)}.b-d1 .band-h,.b-asap .band-h{color:var(--warn)}
+details.band>summary{list-style:none;cursor:pointer;padding:4px;border-radius:6px}
+details.band>summary::-webkit-details-marker{display:none}
+details.band[open]>summary .chev{transform:rotate(180deg)}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.trow{border-radius:10px;background:var(--bg);border-left:3px solid transparent;scroll-margin-top:84px}
+.b-over .trow{border-left-color:var(--crit)}.b-d1 .trow,.b-asap .trow{border-left-color:var(--warn)}
+.trow-h{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto 16px;gap:4px 12px;align-items:center;padding:10px 12px;border:0;background:transparent;text-align:left;border-radius:8px}
+.trow-h:hover{background:var(--sunk)}
+.trow.open .trow-h{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.tl-main{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tl-t{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+.tl-t b{font-weight:600;font-size:14px}
+.tl-sub{font-size:12.5px;color:var(--muted)}
+.tl-side{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.tl-side .count{font-size:14px}
+.tl-side .when{font-size:12.5px;color:var(--muted);font-weight:500}
+.tl-side .miss{font-size:12px;color:var(--warn)}
+.stat{font-size:12.5px;display:inline-flex;gap:4px;align-items:center;white-space:nowrap}
+.stat.ok{color:var(--ok)}
+.chev{color:var(--muted)}
+.trow.open>.trow-h .chev{transform:rotate(180deg)}
+.b-sent .tl-t b{color:var(--muted)}
+
+/* report: one step */
+.tstep{padding:0 14px 16px;display:flex;flex-direction:column;gap:14px}
+.st-head{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line)}
+.st-head h3{font-size:16px}
+.st-to{margin:0;font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:flex-start}
+.st-to b{color:var(--fg);font-weight:500}
+.sgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:start}
+.colh{display:flex;align-items:center;gap:2px;margin-bottom:8px;min-height:24px}
+.req{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.req>li{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;align-items:start}
+.req .st{margin-top:4px}
+.req li.ok .st{color:var(--ok)}.req li.miss .st{color:var(--warn)}
+.rq{display:flex;flex-direction:column;gap:4px;min-width:0}
+.rq-l{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;font-size:13.5px;font-weight:500;line-height:1.4;padding-top:2px}
+.rq-v{display:flex;align-items:center;gap:4px;min-width:0;font-size:12.5px;color:var(--muted)}
+.rq-v .val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.fill textarea,.fill input,.more textarea,.more input,.tstep .field input{background:var(--surface)}
+.more{margin-top:14px}
+.more>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:12.5px;list-style:none;display:inline-flex;align-items:center;gap:6px;padding:2px 4px;border-radius:4px}
+.more>summary::-webkit-details-marker{display:none}
+.morebody{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.datef{margin-top:14px;max-width:260px}
+pre.draft{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--mono);font-size:12.5px;line-height:1.55;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;max-height:440px;overflow:auto}
+.st-act{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.st-act .actions{margin-left:auto}
+#reportMsg{margin:0}
+#reportMsg:empty{display:none}
+
+/* close */
+.cblock{display:flex;flex-direction:column;gap:8px}
+.cblock+.cblock{border-top:1px solid var(--line);padding-top:16px}
+.cblock h3{font-size:14.5px;display:flex;align-items:center;gap:4px}
+.cstats{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.cstats b{color:var(--fg);font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.ctable{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+.ctable th{text-align:left;font-size:12px;font-weight:600;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line);background:var(--bg)}
+.ctable td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;font-variant-numeric:tabular-nums}
+.ctable tr:last-child td{border-bottom:0}
+.ctable .cite{display:block;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.ctable .why{display:block;font-size:12px;color:var(--muted)}
+.rpill{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.r-ok{background:var(--ok-bg);color:var(--ok)}
+.r-late{background:var(--crit-bg);color:var(--crit)}
+.r-open{background:var(--warn-bg);color:var(--warn)}
+.r-nr{background:var(--idle-bg);color:var(--muted)}
+.signrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end}
+@media (max-width:620px){.signrow{grid-template-columns:minmax(0,1fr)}}
+.olist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.olist .empty{display:flex;gap:6px;align-items:center;color:var(--ok)}
+.linkrow{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;border:0;background:transparent;text-align:left;padding:7px 8px;border-radius:6px;font-size:13.5px}
+.linkrow:hover{background:var(--sunk)}
+.linkrow .when{font-size:12px;color:var(--muted);white-space:nowrap}
+.addnote{display:flex;gap:8px}
+.addnote input{flex:1}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-height:340px;overflow:auto}
+.log li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:6px 0;border-top:1px solid var(--line);font-size:13px}
+.log li:first-child{border-top:0}
+.log time{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+footer{color:var(--muted);font-size:12px;max-width:85ch}
+
+/* rulebook */
+.ph{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.ph h2{font-size:15px}
+.ph .i{color:var(--accent)}
+.sub{margin:0 0 12px;color:var(--muted);font-size:13px}
+.rb-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-end}
+.rb-head h2{font-size:20px;display:flex;gap:8px;align-items:center}
+.rb-head p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+.pack{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px}
+.pack span{display:inline-flex;align-items:center;gap:6px}
+.pack b{color:var(--fg);font-weight:600}
+.filter{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.filter button{border:0;background:var(--surface);color:var(--muted);padding:6px 12px;font-size:13px}
+.filter button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.laws{display:flex;flex-direction:column;gap:14px}
+.lawcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:18px}
+.lawcard .meta{display:flex;flex-direction:column;gap:10px;min-width:0}
+.lawcard h3{font-size:17px}
+.lawcard .full{margin:0;color:var(--muted);font-size:12.5px}
+.rt{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.lawicon{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;flex:none;color:var(--lc);background:color-mix(in srgb,var(--lc) 13%,transparent)}
+.law{margin:0;font-size:12px;color:var(--muted);font-family:var(--mono)}
+.facts-list{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:0;font-size:13px}
+.facts-list dt{color:var(--muted)}
+.facts-list dd{margin:0;font-variant-numeric:tabular-nums}
+.arts{display:flex;flex-direction:column;gap:6px;min-width:0}
+.arts details{border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.arts summary{cursor:pointer;padding:8px 10px;display:flex;gap:8px;align-items:baseline;list-style:none}
+.arts summary::-webkit-details-marker{display:none}
+.arts summary::before{content:"";width:7px;height:7px;border-right:1.8px solid var(--muted);border-bottom:1.8px solid var(--muted);transform:rotate(-45deg);flex:none;margin-right:2px;position:relative;top:-1px}
+.arts details[open] summary::before{transform:rotate(45deg)}
+.arts .cite{font-family:var(--mono);font-size:12.5px;font-weight:600;white-space:nowrap}
+.arts .used{font-size:12.5px;color:var(--muted)}
+.arts .body{padding:0 12px 12px}
+.soon{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:16px}
+.soon ul{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.soon li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;font-size:13px}
+.soon li .i{color:var(--muted);margin-top:2px}
+.soon b{font-weight:600}
+
+/* legal quote (drawer and rulebook) */
+.ref{margin:0;display:flex;flex-direction:column;gap:6px}
+.refcap{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:12px}
+.refcap b{font-family:var(--mono);font-size:12.5px}
+.refcap .lid{color:var(--muted)}
+blockquote.legal{margin:0;font-family:var(--serif);font-size:14.5px;line-height:1.6;border-left:3px solid var(--lc);padding:2px 0 2px 12px;white-space:pre-line}
+blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-radius:2px}
+.trans{margin:0;font-size:12.5px;color:var(--muted)}
+.trans b{color:var(--fg);font-weight:500}
+.src{font-size:12px;display:inline-flex;align-items:center;gap:4px;align-self:flex-start}
+
+/* drawer */
+.shade{position:fixed;inset:0;background:var(--shade);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:21;display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px);box-shadow:-12px 0 32px rgba(0,0,0,.12)}
+.dh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dh h2{font-size:16px;flex:1}
+.dh .dicon{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);flex:none}
+.xbtn{border:0;background:transparent;color:var(--muted);width:32px;height:32px;border-radius:6px;display:grid;place-items:center}
+.xbtn:hover{background:var(--sunk);color:var(--fg)}
+.db{overflow:auto;padding:16px;display:flex;flex-direction:column;gap:18px}
+.plain{margin:0;font-size:14px;max-width:65ch}
+.plainlab{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.df{padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}
+.df small{color:var(--muted)}
+
+
+/* menu, confirmation, sent details, not needed, archive */
+.menu{position:relative}
+.menu>summary{list-style:none;cursor:pointer;min-height:40px}
+.menu>summary::-webkit-details-marker{display:none}
+.menu[open]>summary .chev{transform:rotate(180deg)}
+.menu-pop{position:absolute;right:0;top:calc(100% + 4px);z-index:12;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px var(--lift);padding:4px;min-width:200px;display:flex;flex-direction:column}
+.menu-item{display:flex;align-items:center;gap:8px;border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:7px;font-size:14px;min-height:40px}
+.menu-item:hover{background:var(--sunk)}
+.confirm{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:var(--warn-bg);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);border-radius:10px;padding:12px 14px}
+.confirm p{margin:0}
+.sentbox{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 14px;background:var(--ok-bg);border-radius:8px;padding:10px 12px}
+.sentbox input{background:var(--surface)}
+.skipform{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.skipform .field{flex:1 1 240px}
+.skipform input{background:var(--surface)}
+.arow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:6px 8px;font-size:13.5px}
+.arow .aname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arow .when{font-size:12px;color:var(--muted);white-space:nowrap}
+.dtf{max-width:280px}
+@media (max-width:700px){pre.draft,.log{max-height:none;overflow:visible}}
+@media (max-width:480px){.arow{grid-template-columns:minmax(0,1fr) auto}.arow .when{grid-column:1;grid-row:2}}
+@media (prefers-reduced-motion:no-preference){
+  .drawer{animation:slide .18s ease-out}
+  @keyframes slide{from{transform:translateX(24px)}to{transform:none}}
+  .tstep,.phase.cur .ph-body{animation:fadein .16s ease-out}
+  @keyframes fadein{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+  .btn,.trow-h,.ph-btn,.linkrow,.chev{transition:background-color .15s,border-color .15s,transform .15s}
+}
+@media (max-width:760px){
+  .sgrid,.lawcard{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  .ph-body{padding:0 14px 18px}
+  .sform>*{grid-column:1/-1}
+  .brand p{display:none}
+  .tstep{padding:0 10px 14px}
+  .trow-h{padding:10px}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.4-3.1 8.1-7.5 9.5-4.4-1.4-7.5-5.1-7.5-9.5V6L12 3z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-person" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5 1.6 0 3 .5 4.1 1.4"/><rect x="14.5" y="14" width="7" height="6" rx="1"/><path d="M16 14v-1.5a2 2 0 014 0V14"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M2.5 12.5h4l2.5-6 4.5 12 2.5-6h5.5"/></symbol>
+  <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/><rect x="10" y="10" width="4" height="4"/><path d="M9.5 3v3.5M14.5 3v3.5M9.5 17.5V21M14.5 17.5V21M3 9.5h3.5M3 14.5h3.5M17.5 9.5H21M17.5 14.5H21"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.6v.2"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 012-2h13v14H6a2 2 0 00-2 2.5z"/><path d="M4 19.5A1.5 1.5 0 005.5 21H19v-4"/><path d="M9 7h6"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7.5h1.5M13.5 7.5H15M9 11.5h1.5M13.5 11.5H15M10 21v-4h4v4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 4.2L2.6 18a2 2 0 001.7 3h15.4a2 2 0 001.7-3L13.7 4.2a2 2 0 00-3.4 0z"/><path d="M12 9.5v4.5"/><path d="M12 17.3v.2"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6.5A1.5 1.5 0 005 4.5v15A1.5 1.5 0 006.5 21h11a1.5 1.5 0 001.5-1.5V8l-5-5z"/><path d="M14 3v5h5M8.5 13h7M8.5 17h5"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" stroke-width="2.6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="1.5"/><path d="M15.5 8.5V5A1.5 1.5 0 0014 3.5H5A1.5 1.5 0 003.5 5v9A1.5 1.5 0 005 15.5h3.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-reload" viewBox="0 0 24 24"><path d="M20 11a8 8 0 00-14.3-4.7L4 8"/><path d="M4 3.5V8h4.5"/><path d="M4 13a8 8 0 0014.3 4.7L20 16"/><path d="M20 20.5V16h-4.5"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v4.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 014 18.5v-11A1.5 1.5 0 015.5 6H10"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3L10 14"/><path d="M21 3l-7 18-4-7-7-4 18-7z"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="1.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 014.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.3v.2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.7 2.7L16.2 9.5"/></symbol>
+  <symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.1 2.1 0 00-3-3L5 17v3z"/><path d="M14 7l3 3"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M5 7h14"/><path d="M5 7l-2.5 6a3 3 0 005 0L5 7zM19 7l-2.5 6a3 3 0 005 0L19 7z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="1.5"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
+  <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+  <symbol id="i-tick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"><svg class="i"><use href="#i-clock"/></svg></div>
+      <div>
+        <h1>Incident Clock <span class="tag">Demo</span></h1>
+        <p>NIS2, GDPR, MDR and CRA deadlines for one incident.</p>
+      </div>
+    </div>
+    <nav class="nav" role="tablist" aria-label="Views">
+      <button type="button" role="tab" id="navIncident" aria-selected="true" data-view="incident">Incident <span class="count-badge" id="navBadge"></span></button>
+      <button type="button" role="tab" id="navRules" aria-selected="false" data-view="rulebook"><svg class="i sm"><use href="#i-book"/></svg>Rulebook</button>
+    </nav>
+    <details class="menu" id="menu">
+      <summary class="btn ghost">More<svg class="i sm chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+      <div class="menu-pop">
+        <button class="menu-item" id="btnNew" type="button"><svg class="i sm"><use href="#i-plus"/></svg>New incident</button>
+        <button class="menu-item" id="btnExample" type="button"><svg class="i sm"><use href="#i-reload"/></svg>Load example</button>
+      </div>
+    </details>
+  </header>
+
+  <div class="confirm" id="confirmBar" role="alertdialog" aria-labelledby="cfText" aria-describedby="cfHint" hidden>
+    <div><p id="cfText"><b>This replaces the current incident and its decision log.</b></p><p class="hint" id="cfHint">The current incident is kept under Earlier incidents in Close.</p></div>
+    <div class="actions"><button class="btn primary" id="cfYes" type="button">Replace</button><button class="btn" id="cfNo" type="button">Cancel</button></div>
+  </div>
+
+  <div id="viewIncident" class="view">
+    <div class="bar" id="bar">
+      <div class="bar-inc"><div class="bar-name" id="barName"></div><div class="bar-aware" id="barAware"></div></div>
+      <button type="button" class="bar-next" id="barNext"></button>
+    </div>
+    <p class="example-note" id="exampleNote" hidden><svg class="i sm"><use href="#i-info"/></svg>This is an example incident with made-up details. Choose More, then New incident, to start a blank one.</p>
+
+    <ol class="phases" id="phases">
+      <li class="phase" id="ph1">
+        <button type="button" class="ph-btn" id="phb1" data-p="1" aria-controls="phbody1"><span class="num" id="phn1">1</span><span class="ph-txt"><span class="ph-title">Start</span><span class="ph-sum" id="phs1"></span></span><span class="ph-act" id="pha1"></span></button>
+        <div class="ph-body" id="phbody1" hidden>
+          <p class="lead">The clock starts at the time you became aware of the incident. You can change everything later. <button type="button" class="ib" data-help="sec_facts" aria-label="Help: incident facts"><svg class="i"><use href="#i-info"/></svg></button></p>
+          <form id="startForm" class="sform" autocomplete="off">
+            <div class="field s4"><label for="f_name">Incident name</label><input id="f_name" data-k="name" placeholder="For example: Ransomware on file server"></div>
+            <div class="field s2"><label for="f_org">Organisation</label><input id="f_org" data-k="org"></div>
+            <div class="field s2"><div class="flab"><label for="f_aware">When did you become aware?</label><button type="button" class="ib" data-help="aware" aria-label="Help: when the clock starts"><svg class="i"><use href="#i-info"/></svg></button></div><input id="f_aware" type="datetime-local" data-k="aware"><p class="hint">All deadlines count from this time.</p></div>
+            <div class="field s4"><label for="f_desc">What happened</label><textarea id="f_desc" data-k="desc" rows="4"></textarea></div>
+            <div class="navrow s6"><span class="status" id="startMsg" aria-live="polite"></span><button type="submit" class="btn primary" id="startNext"></button></div>
+          </form>
+        </div>
+      </li>
+      <li class="phase" id="ph2">
+        <button type="button" class="ph-btn" id="phb2" data-p="2" aria-controls="phbody2"><span class="num" id="phn2">2</span><span class="ph-txt"><span class="ph-title">Triage</span><span class="ph-sum" id="phs2"></span></span><span class="ph-act" id="pha2"></span></button>
+        <div class="ph-body" id="phbody2" hidden>
+          <p class="lead">Answer what you know. <b>Unsure</b> keeps the clock running, so you do not miss a deadline while you find out. <button type="button" class="ib" data-help="unsure" aria-label="Help: why Unsure keeps the clock running"><svg class="i"><use href="#i-info"/></svg></button></p>
+          <div id="triage"></div>
+        </div>
+      </li>
+      <li class="phase" id="ph3">
+        <button type="button" class="ph-btn" id="phb3" data-p="3" aria-controls="phbody3"><span class="num" id="phn3">3</span><span class="ph-txt"><span class="ph-title">Report</span><span class="ph-sum" id="phs3"></span></span><span class="ph-act" id="pha3"></span></button>
+        <div class="ph-body" id="phbody3" hidden>
+          <details class="lawsum" id="lawWrap"><summary><span class="eyebrow">Which laws apply</span><span class="lawpills" id="lawSum"></span><svg class="i sm chev" aria-hidden="true"><use href="#i-chev"/></svg></summary><ul class="lawlist" id="lawList"></ul></details>
+          <p class="status" id="reportMsg" aria-live="polite"></p>
+          <div id="timeline"></div>
+          <div class="navrow"><button type="button" class="btn" id="toClose">Go to Close<svg class="i sm"><use href="#i-arrow-right"/></svg></button></div>
+        </div>
+      </li>
+      <li class="phase" id="ph4">
+        <button type="button" class="ph-btn" id="phb4" data-p="4" aria-controls="phbody4"><span class="num" id="phn4">4</span><span class="ph-txt"><span class="ph-title">Close</span><span class="ph-sum" id="phs4"></span></span><span class="ph-act" id="pha4"></span></button>
+        <div class="ph-body" id="phbody4" hidden>
+          <section class="cblock" aria-labelledby="endH">
+            <h3 id="endH">When did incident handling end?<button type="button" class="ib" data-help="d-nis2-p" aria-label="Help: NIS2 progress and final report"><svg class="i"><use href="#i-info"/></svg></button></h3>
+            <div class="field datef" style="margin-top:0"><label for="c_ended">Date incident handling ended</label><input type="date" id="c_ended" data-k="ended"></div>
+            <p class="hint">This sets the NIS2 final report date. Leave it empty while you are still handling the incident.</p>
+          </section>
+          <section class="cblock" id="fixBlock" aria-labelledby="fixH" hidden>
+            <h3 id="fixH">When was a fix or mitigation available?<button type="button" class="ib" data-help="d-cra-fv" aria-label="Help: CRA final report for a vulnerability"><svg class="i"><use href="#i-info"/></svg></button></h3>
+            <div class="field datef" style="margin-top:0"><label for="c_fixdate">Date a fix or mitigation was available</label><input type="date" id="c_fixdate" data-k="fixdate"></div>
+            <p class="hint">This starts the CRA final report clock: 14 days, to the end of the day.</p>
+          </section>
+          <section class="cblock" aria-labelledby="openH">
+            <h3 id="openH">Final reports and records</h3>
+            <ul class="olist" id="closeOpen"></ul>
+            <p class="hint">Also record the incident in your own incident register, even when nothing was reported.</p>
+          </section>
+          <section class="cblock" aria-labelledby="compH">
+            <h3 id="compH">Compliance summary<button type="button" class="ib" data-help="sec_comp" aria-label="Help: why a compliance summary"><svg class="i"><use href="#i-info"/></svg></button></h3>
+            <p class="hint">One page for the auditor: every legal duty for this incident, what you did and when. Laws that did not apply are listed too, with the reason.</p>
+            <div class="cstats" id="compHead"></div>
+            <div class="tablewrap"><table class="ctable"><thead><tr><th scope="col">Law</th><th scope="col">Duty</th><th scope="col">Due</th><th scope="col">Done</th><th scope="col">Result</th></tr></thead><tbody id="compBody"></tbody></table></div>
+            <div class="signrow">
+              <div class="field"><label for="c_owner">Incident owner (who made the decisions)</label><input id="c_owner" placeholder="Name, role" autocomplete="off"></div>
+              <div class="field"><label for="c_signer">Management sign-off by</label><input id="c_signer" placeholder="Name, role" autocomplete="off"></div>
+              <button class="btn primary" id="signBtn" type="button"><svg class="i sm"><use href="#i-check"/></svg><span>Sign off</span></button>
+            </div>
+            <p class="hint" id="signStatus" aria-live="polite"></p>
+            <div class="navrow"><span class="status" id="compStatus" aria-live="polite"></span><button class="btn" id="copyComp" type="button"><svg class="i sm"><use href="#i-copy"/></svg>Copy summary</button></div>
+            <pre class="draft" id="compOut" hidden></pre>
+          </section>
+          <section class="cblock" aria-labelledby="logH">
+            <h3 id="logH">Decision log<button type="button" class="ib" data-help="sec_log" aria-label="Help: why keep a decision log"><svg class="i"><use href="#i-info"/></svg></button></h3>
+            <p class="hint">Every answer and every report sent, with a timestamp. This is your evidence for the auditor.</p>
+            <form class="addnote" id="noteForm" autocomplete="off"><label class="sr" for="logNote">Note for the log</label><input id="logNote" placeholder="Add a note, for example a decision and who made it"><button type="submit" class="btn" id="addNote">Add</button></form>
+            <ul class="log" id="log"></ul>
+            <div class="navrow"><span class="status" id="logStatus" aria-live="polite"></span><button class="btn primary" id="copyLog" type="button"><svg class="i sm"><use href="#i-copy"/></svg>Copy log</button></div>
+          </section>
+          <section class="cblock" aria-labelledby="dataH">
+            <h3 id="dataH">Incident data</h3>
+            <p class="hint">Copy everything about this incident (facts, answers, sent times, log) as JSON, for example to keep it in your own records.</p>
+            <div class="navrow"><span class="status" id="jsonStatus" aria-live="polite"></span><button class="btn" id="copyJson" type="button"><svg class="i sm"><use href="#i-copy"/></svg>Copy incident data (JSON)</button></div>
+            <pre class="draft" id="jsonOut" hidden></pre>
+          </section>
+          <section class="cblock" id="archBlock" aria-labelledby="archH" hidden>
+            <h3 id="archH">Earlier incidents</h3>
+            <p class="hint">Kept in this browser when you start a new incident or load the example. The last 10 are kept.</p>
+            <ul class="olist" id="archList"></ul>
+          </section>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <div id="viewRules" class="view" hidden>
+    <div class="rb-head">
+      <div>
+        <h2><svg class="i lg" style="color:var(--accent)"><use href="#i-book"/></svg>Rulebook</h2>
+        <p>The laws and articles this tool uses right now, with the exact text. Status shows how each law applies to the incident you are working on.</p>
+      </div>
+      <div class="filter" role="group" aria-label="Filter laws">
+        <button type="button" id="fltAll" aria-pressed="true" data-flt="all">All laws</button>
+        <button type="button" id="fltActive" aria-pressed="false" data-flt="active">Applies to this incident</button>
+      </div>
+    </div>
+    <div class="pack">
+      <span><svg class="i sm"><use href="#i-scale"/></svg>Rule pack <b>FI-2026.10</b></span>
+      <span><svg class="i sm"><use href="#i-calendar"/></svg>Texts copied from EUR-Lex and Finlex on <b>2026-10-16</b></span>
+      <span><svg class="i sm"><use href="#i-flag"/></svg>Country: <b>Finland</b></span>
+      <span><svg class="i sm"><use href="#i-alert"/></svg>Demo, <b>not reviewed by a lawyer</b></span>
+    </div>
+    <div class="laws" id="laws"></div>
+    <section class="soon" aria-labelledby="soonH">
+      <div class="ph"><svg class="i"><use href="#i-calendar"/></svg><h2 id="soonH">Related, not in the rule pack yet</h2></div>
+      <ul id="soon"></ul>
+    </section>
+  </div>
+
+  <footer>Demo only, not legal advice. Legal texts are quoted from the official EUR-Lex and Finlex versions as of 2026-10-16. Recipients assume a Finnish medical device manufacturer with its main establishment in Finland. &copy; 2026 Petrus Viitanen. All rights reserved. Confidential demo, not for distribution.</footer>
+</div>
+
+<div class="shade" id="shade" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle" hidden>
+  <div class="dh"><div class="dicon" id="dIcon"></div><h2 id="dTitle"></h2><button type="button" class="xbtn" id="dClose" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="db" id="dBody"></div>
+  <div class="df"><small>Exact text from the official sources. Highlight marks the part the tool relies on.</small><button type="button" class="btn" id="dRules"><svg class="i sm"><use href="#i-book"/></svg>Open Rulebook</button></div>
+</aside>
+
+<script>
+(function(){
+const H=3600e3, DAY=24*H, KEY='incident-clock-v1';
+const ic=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const ib=(k,label)=>`<button type="button" class="ib" data-help="${k}" aria-label="Legal basis: ${label}">${ic('info')}</button>`;
+
+/* ---------- Laws and exact texts ---------- */
+const EUR=c=>`https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${c}`;
+const LAWS={
+ nis2:{short:'NIS2',name:'NIS2 Directive',id:'Directive (EU) 2022/2555',icon:'shield',url:EUR('32022L2555'),
+   full:'Measures for a high common level of cybersecurity across the Union',
+   facts:[['In force','2023-01-16'],['Applies from','2024-10-18 (through national law)'],['In Finland','Cybersecurity Act 124/2025, from 2025-04-08']],
+   to:'Fimea, your supervisory authority under the Cybersecurity Act (26 §)'},
+ fi:{short:'FI',name:'Cybersecurity Act (Finland)',id:'Kyberturvallisuuslaki 124/2025',icon:'flag',url:'https://www.finlex.fi/fi/lainsaadanto/2025/124',
+   full:'Finnish law that puts NIS2 into force. Sets who reports, to whom and when.',
+   facts:[['In force','2025-04-08'],['Supervisor for medical devices','Fimea (26 §)'],['Language of text','Finnish (official), English summary here']]},
+ gdpr:{short:'GDPR',name:'GDPR',id:'Regulation (EU) 2016/679',icon:'person',url:EUR('32016R0679'),
+   full:'General Data Protection Regulation',
+   facts:[['Applies from','2018-05-25'],['In Finland','Data Protection Act 1050/2018']],
+   to:'Office of the Data Protection Ombudsman (Tietosuojavaltuutetun toimisto)'},
+ mdr:{short:'MDR',name:'Medical Device Regulation',id:'Regulation (EU) 2017/745',icon:'pulse',url:EUR('32017R0745'),
+   full:'Medical devices: vigilance and post-market surveillance',
+   facts:[['Applies from','2021-05-26'],['Reports through','EUDAMED vigilance module or national MIR form']],
+   to:'Fimea, as a Manufacturer Incident Report (MIR)'},
+ cra:{short:'CRA',name:'Cyber Resilience Act',id:'Regulation (EU) 2024/2847',icon:'chip',url:EUR('32024R2847'),
+   full:'Cybersecurity requirements for products with digital elements',
+   facts:[['In force','2024-12-10'],['Reporting (Art. 14) from','2026-09-11'],['Fully applies from','2027-12-11']],
+   to:'CSIRT coordinator (NCSC-FI) and ENISA, through the ENISA single reporting platform'}
+};
+const REF={
+ nis2_2_1:{law:'nis2',cite:'Art. 2(1)',a:'art_2',use:'Scope question',
+  text:`This Directive applies to public or private entities of a type referred to in Annex I or II which qualify as medium-sized enterprises under Article 2 of the Annex to Recommendation 2003/361/EC, or exceed the ceilings for medium-sized enterprises provided for in paragraph 1 of that Article, and which provide their services or carry out their activities within the Union.`,
+  hl:'qualify as medium-sized enterprises'},
+ nis2_annex2:{law:'nis2',cite:'Annex II, 5(a)',a:'anx_II',use:'Scope question',
+  text:`5. Manufacturing
+(a) Manufacture of medical devices and in vitro diagnostic medical devices
+Entities manufacturing medical devices as defined in Article 2, point (1), of Regulation (EU) 2017/745 of the European Parliament and of the Council, and entities manufacturing in vitro diagnostic medical devices as defined in Article 2, point (2), of Regulation (EU) 2017/746 of the European Parliament and of the Council with the exception of entities manufacturing medical devices referred to in Annex I, point 5, fifth indent, of this Directive`,
+  hl:'Entities manufacturing medical devices as defined in Article 2, point (1), of Regulation (EU) 2017/745'},
+ nis2_23_1:{law:'nis2',cite:'Art. 23(1)',a:'art_23',use:'Duty to report',
+  text:`Each Member State shall ensure that essential and important entities notify, without undue delay, its CSIRT or, where applicable, its competent authority in accordance with paragraph 4 of any incident that has a significant impact on the provision of their services as referred to in paragraph 3 (significant incident).`,
+  hl:'any incident that has a significant impact on the provision of their services'},
+ nis2_23_1b:{law:'nis2',cite:'Art. 23(1)',a:'art_23',use:'Inform affected customers',
+  text:`Where appropriate, entities concerned shall notify, without undue delay, the recipients of their services of significant incidents that are likely to adversely affect the provision of those services.`,
+  hl:'the recipients of their services'},
+ nis2_23_3:{law:'nis2',cite:'Art. 23(3)',a:'art_23',use:'Is it significant?',
+  text:`An incident shall be considered to be significant if:
+(a) it has caused or is capable of causing severe operational disruption of the services or financial loss for the entity concerned;
+(b) it has affected or is capable of affecting other natural or legal persons by causing considerable material or non-material damage.`,
+  hl:'severe operational disruption of the services or financial loss'},
+ nis2_23_4a:{law:'nis2',cite:'Art. 23(4)(a)',a:'art_23',use:'Early warning, 24 h',
+  text:`without undue delay and in any event within 24 hours of becoming aware of the significant incident, an early warning, which, where applicable, shall indicate whether the significant incident is suspected of being caused by unlawful or malicious acts or could have a cross-border impact;`,
+  hl:'within 24 hours of becoming aware of the significant incident, an early warning'},
+ nis2_23_4b:{law:'nis2',cite:'Art. 23(4)(b)',a:'art_23',use:'Incident notification, 72 h',
+  text:`without undue delay and in any event within 72 hours of becoming aware of the significant incident, an incident notification, which, where applicable, shall update the information referred to in point (a) and indicate an initial assessment of the significant incident, including its severity and impact, as well as, where available, the indicators of compromise;`,
+  hl:'within 72 hours of becoming aware of the significant incident, an incident notification'},
+ nis2_23_4d:{law:'nis2',cite:'Art. 23(4)(d)',a:'art_23',use:'Final report, 1 month',
+  text:`a final report not later than one month after the submission of the incident notification under point (b), including the following:
+(i) a detailed description of the incident, including its severity and impact;
+(ii) the type of threat or root cause that is likely to have triggered the incident;
+(iii) applied and ongoing mitigation measures;
+(iv) where applicable, the cross-border impact of the incident;`,
+  hl:'not later than one month after the submission of the incident notification'},
+ nis2_23_4c:{law:'nis2',cite:'Art. 23(4)(c)',a:'art_23',use:'Intermediate report, on request',
+  text:`upon the request of a CSIRT or, where applicable, the competent authority, an intermediate report on relevant status updates;`,
+  hl:'upon the request'},
+ nis2_23_4e:{law:'nis2',cite:'Art. 23(4)(e)',a:'art_23',use:'Progress report if still ongoing',
+  text:`in the event of an ongoing incident at the time of the submission of the final report referred to in point (d), Member States shall ensure that entities concerned provide a progress report at that time and a final report within one month of their handling of the incident.`,
+  hl:'provide a progress report at that time and a final report within one month of their handling of the incident'},
+ fi_12:{law:'fi',cite:'12 §',use:'Interim report in Finland',lang:'fi',
+  text:`Toimijan on annettava valvovan viranomaisen pyynnöstä lisätietoja tai väliraportti merkittävää poikkeamaa koskevista tilannepäivityksistä ja käsittelyn edistymisestä.
+Jos merkittävä poikkeama on pitkäkestoinen, toimijan on annettava väliraportti viimeistään kuukauden kuluttua jatkoilmoituksen antamisesta.`,
+  hl:'väliraportti viimeistään kuukauden kuluttua jatkoilmoituksen antamisesta',
+  en:'Give more information or an interim report when the supervisory authority asks. If the incident is long-running, give an interim report no later than one month after the follow-up report (notification).'},
+ nis2_20_1:{law:'nis2',cite:'Art. 20(1)',a:'art_20',use:'Management approves and oversees',
+  text:`Member States shall ensure that the management bodies of essential and important entities approve the cybersecurity risk-management measures taken by those entities in order to comply with Article 21, oversee its implementation and can be held liable for infringements by the entities of that Article.`,
+  hl:'approve the cybersecurity risk-management measures'},
+ nis2_21_2:{law:'nis2',cite:'Art. 21(2)(b), (f)',a:'art_21',use:'Incident handling that works',
+  text:`The measures referred to in paragraph 1 shall be based on an all-hazards approach that aims to protect network and information systems and the physical environment of those systems from incidents, and shall include at least the following:
+[...]
+(b) incident handling;
+[...]
+(f) policies and procedures to assess the effectiveness of cybersecurity risk-management measures;`,
+  hl:'policies and procedures to assess the effectiveness'},
+ gdpr_5_2:{law:'gdpr',cite:'Art. 5(2)',a:'art_5',use:'Accountability: be able to show it',
+  text:`The controller shall be responsible for, and be able to demonstrate compliance with, paragraph 1 ('accountability').`,
+  hl:'be able to demonstrate compliance'},
+ fi_11:{law:'fi',cite:'11 §',use:'Early warning and notification in Finland',lang:'fi',
+  text:`Toimijan on viipymättä ilmoitettava valvovalle viranomaiselle merkittävästä poikkeamasta. Merkittävällä poikkeamalla tarkoitetaan poikkeamaa, joka on aiheuttanut tai voi aiheuttaa vakavan palvelujen toimintahäiriön tai huomattavia taloudellisia tappioita asianomaiselle toimijalle, sekä poikkeamaa, joka on vaikuttanut tai voi vaikuttaa muihin luonnollisiin henkilöihin tai oikeushenkilöihin aiheuttamalla huomattavaa aineellista tai aineetonta vahinkoa.
+Ensi-ilmoitus on tehtävä 24 tunnin kuluessa merkittävän poikkeaman havaitsemisesta ja jatkoilmoitus 72 tunnin kuluessa merkittävän poikkeaman havaitsemisesta.`,
+  hl:'Ensi-ilmoitus on tehtävä 24 tunnin kuluessa merkittävän poikkeaman havaitsemisesta ja jatkoilmoitus 72 tunnin kuluessa',
+  en:'Report a significant incident to your supervisory authority without delay. First report (early warning) within 24 hours, follow-up report (notification) within 72 hours of detecting the incident.'},
+ fi_13:{law:'fi',cite:'13 §',use:'Final report in Finland',lang:'fi',
+  text:`Toimijan on annettava valvovalle viranomaiselle merkittävää poikkeamaa koskeva loppuraportti kuukauden kuluessa jatkoilmoituksen toimittamisesta tai, jos kyseessä on pitkäkestoinen poikkeama, kuukauden kuluessa sen käsittelyn päättymisestä.`,
+  hl:'loppuraportti kuukauden kuluessa jatkoilmoituksen toimittamisesta',
+  en:'Final report within one month of the follow-up report. For a long-running incident, within one month after handling ends.'},
+ fi_26:{law:'fi',cite:'26 §',use:'Who receives your NIS2 reports',lang:'fi',
+  text:`Lääkealan turvallisuus- ja kehittämiskeskus siltä osin kuin kyse on liitteen I kohdan 13 alakohdissa c–f ja liitteen II kohdissa 9 ja 10 tarkoitetuista toimijoista;`,
+  hl:'Lääkealan turvallisuus- ja kehittämiskeskus',
+  en:'Fimea supervises the entities in Annex II points 9 and 10 of the Act, which are medical device and IVD manufacturers. Your NIS2 reports go to Fimea.'},
+ gdpr_4_12:{law:'gdpr',cite:'Art. 4(12)',a:'art_4',use:'Is it a personal data breach?',
+  text:`'personal data breach' means a breach of security leading to the accidental or unlawful destruction, loss, alteration, unauthorised disclosure of, or access to, personal data transmitted, stored or otherwise processed;`,
+  hl:'destruction, loss, alteration, unauthorised disclosure of, or access to'},
+ gdpr_33_1:{law:'gdpr',cite:'Art. 33(1)',a:'art_33',use:'Notify the authority, 72 h',
+  text:`In the case of a personal data breach, the controller shall without undue delay and, where feasible, not later than 72 hours after having become aware of it, notify the personal data breach to the supervisory authority competent in accordance with Article 55, unless the personal data breach is unlikely to result in a risk to the rights and freedoms of natural persons. Where the notification to the supervisory authority is not made within 72 hours, it shall be accompanied by reasons for the delay.`,
+  hl:'not later than 72 hours after having become aware of it'},
+ gdpr_33_2:{law:'gdpr',cite:'Art. 33(2)',a:'art_33',use:'Processor notifies the controller',
+  text:`The processor shall notify the controller without undue delay after becoming aware of a personal data breach.`,
+  hl:'without undue delay'},
+ gdpr_33_3:{law:'gdpr',cite:'Art. 33(3)',a:'art_33',use:'What the notification must contain',
+  text:`The notification referred to in paragraph 1 shall at least:
+(a) describe the nature of the personal data breach including where possible, the categories and approximate number of data subjects concerned and the categories and approximate number of personal data records concerned;
+(b) communicate the name and contact details of the data protection officer or other contact point where more information can be obtained;
+(c) describe the likely consequences of the personal data breach;
+(d) describe the measures taken or proposed to be taken by the controller to address the personal data breach, including, where appropriate, measures to mitigate its possible adverse effects.`,
+  hl:'shall at least'},
+ gdpr_33_4:{law:'gdpr',cite:'Art. 33(4)',a:'art_33',use:'Report in phases',
+  text:`Where, and in so far as, it is not possible to provide the information at the same time, the information may be provided in phases without undue further delay.`,
+  hl:'the information may be provided in phases'},
+ gdpr_33_5:{law:'gdpr',cite:'Art. 33(5)',a:'art_33',use:'Internal breach register',
+  text:`The controller shall document any personal data breaches, comprising the facts relating to the personal data breach, its effects and the remedial action taken. That documentation shall enable the supervisory authority to verify compliance with this Article.`,
+  hl:'The controller shall document any personal data breaches'},
+ gdpr_34_1:{law:'gdpr',cite:'Art. 34(1)',a:'art_34',use:'Inform the people affected',
+  text:`When the personal data breach is likely to result in a high risk to the rights and freedoms of natural persons, the controller shall communicate the personal data breach to the data subject without undue delay.`,
+  hl:'likely to result in a high risk'},
+ gdpr_34_2:{law:'gdpr',cite:'Art. 34(2)',a:'art_34',use:'What to tell the people affected',
+  text:`The communication to the data subject referred to in paragraph 1 of this Article shall describe in clear and plain language the nature of the personal data breach and contain at least the information and measures referred to in points (b), (c) and (d) of Article 33(3).`,
+  hl:'in clear and plain language'},
+ mdr_87_8:{law:'mdr',cite:'Art. 87(8)',a:'art_87',use:'Field safety corrective action',
+  text:`Except in cases of urgency in which the manufacturer needs to undertake field safety corrective action immediately, the manufacturer shall, without undue delay, report the field safety corrective action referred to in point (b) of paragraph 1 in advance of the field safety corrective action being undertaken.`,
+  hl:'in advance of the field safety corrective action being undertaken'},
+ mdr_89_5:{law:'mdr',cite:'Art. 89(5)',a:'art_89',use:'Final report after investigation',
+  text:`The manufacturer shall provide a final report to the competent authority setting out its findings from the investigation by means of the electronic system referred to in Article 92. The report shall set out conclusions and where relevant indicate corrective actions to be taken.`,
+  hl:'The manufacturer shall provide a final report'},
+ mdr_2_64:{law:'mdr',cite:'Art. 2(64)',a:'art_2',use:'What counts as an incident',
+  text:`'incident' means any malfunction or deterioration in the characteristics or performance of a device made available on the market, including use-error due to ergonomic features, as well as any inadequacy in the information supplied by the manufacturer and any undesirable side-effect;`,
+  hl:'any malfunction or deterioration in the characteristics or performance of a device made available on the market'},
+ mdr_2_65:{law:'mdr',cite:'Art. 2(65)',a:'art_2',use:'What makes it serious',
+  text:`'serious incident' means any incident that directly or indirectly led, might have led or might lead to any of the following:
+(a) the death of a patient, user or other person,
+(b) the temporary or permanent serious deterioration of a patient's, user's or other person's state of health,
+(c) a serious public health threat;`,
+  hl:'directly or indirectly led, might have led or might lead'},
+ mdr_2_66:{law:'mdr',cite:'Art. 2(66)',a:'art_2',use:'Serious public health threat',
+  text:`'serious public health threat' means an event which could result in imminent risk of death, serious deterioration in a person's state of health, or serious illness, that may require prompt remedial action, and that may cause significant morbidity or mortality in humans, or that is unusual or unexpected for the given place and time;`,
+  hl:'imminent risk of death'},
+ mdr_87_1a:{law:'mdr',cite:'Art. 87(1)(a)',a:'art_87',use:'Duty to report',
+  text:`Manufacturers of devices made available on the Union market, other than investigational devices, shall report, to the relevant competent authorities, in accordance with Articles 92(5) and (7), the following:
+(a) any serious incident involving devices made available on the Union market, except expected side-effects which are clearly documented in the product information and quantified in the technical documentation and are subject to trend reporting pursuant to Article 88;`,
+  hl:'any serious incident involving devices made available on the Union market'},
+ mdr_87_3:{law:'mdr',cite:'Art. 87(3)',a:'art_87',use:'Serious incident, 15 days',
+  text:`Manufacturers shall report any serious incident as referred to in point (a) of paragraph 1 immediately after they have established the causal relationship between that incident and their device or that such causal relationship is reasonably possible and not later than 15 days after they become aware of the incident.`,
+  hl:'not later than 15 days after they become aware of the incident'},
+ mdr_87_4:{law:'mdr',cite:'Art. 87(4)',a:'art_87',use:'Public health threat, 2 days',
+  text:`Notwithstanding paragraph 3, in the event of a serious public health threat the report referred to in paragraph 1 shall be provided immediately, and not later than 2 days after the manufacturer becomes aware of that threat.`,
+  hl:'not later than 2 days'},
+ mdr_87_5:{law:'mdr',cite:'Art. 87(5)',a:'art_87',use:'Death or serious harm, 10 days',
+  text:`Notwithstanding paragraph 3, in the event of death or an unanticipated serious deterioration in a person's state of health the report shall be provided immediately after the manufacturer has established or as soon as it suspects a causal relationship between the device and the serious incident but not later than 10 days after the date on which the manufacturer becomes aware of the serious incident.`,
+  hl:'not later than 10 days'},
+ mdr_87_7:{law:'mdr',cite:'Art. 87(7)',a:'art_87',use:'When you are unsure',
+  text:`If, after becoming aware of a potentially reportable incident, the manufacturer is uncertain about whether the incident is reportable, it shall nevertheless submit a report within the timeframe required in accordance with paragraphs 2 to 5.`,
+  hl:'it shall nevertheless submit a report within the timeframe'},
+ cra_2_2:{law:'cra',cite:'Art. 2(2)',a:'art_2',use:'Medical devices are out of scope',
+  text:`This Regulation does not apply to products with digital elements to which the following Union legal acts apply:
+(a) Regulation (EU) 2017/745;
+(b) Regulation (EU) 2017/746;
+(c) Regulation (EU) 2019/2144.`,
+  hl:'(a) Regulation (EU) 2017/745;'},
+ cra_14_1:{law:'cra',cite:'Art. 14(1)',a:'art_14',use:'Exploited vulnerability',
+  text:`A manufacturer shall notify any actively exploited vulnerability contained in the product with digital elements that it becomes aware of simultaneously to the CSIRT designated as coordinator, in accordance with paragraph 7 of this Article, and to ENISA. The manufacturer shall notify that actively exploited vulnerability via the single reporting platform established pursuant to Article 16.`,
+  hl:'any actively exploited vulnerability'},
+ cra_14_2:{law:'cra',cite:'Art. 14(2)(a)-(c)',a:'art_14',use:'Vulnerability: 24 h, 72 h, final',
+  text:`(a) an early warning notification of an actively exploited vulnerability, without undue delay and in any event within 24 hours of the manufacturer becoming aware of it, indicating, where applicable, the Member States on the territory of which the manufacturer is aware that their product with digital elements has been made available;
+(b) unless the relevant information has already been provided, a vulnerability notification, without undue delay and in any event within 72 hours of the manufacturer becoming aware of the actively exploited vulnerability, which shall provide general information, as available, about the product with digital elements concerned, the general nature of the exploit and of the vulnerability concerned as well as any corrective or mitigating measures taken, and corrective or mitigating measures that users can take, and which shall also indicate, where applicable, how sensitive the manufacturer considers the notified information to be;
+(c) unless the relevant information has already been provided, a final report, no later than 14 days after a corrective or mitigating measure is available, including at least the following: (i) a description of the vulnerability, including its severity and impact; (ii) where available, information concerning any malicious actor that has exploited or that is exploiting the vulnerability; (iii) details about the security update or other corrective measures that have been made available to remedy the vulnerability.`,
+  hl:'no later than 14 days after a corrective or mitigating measure is available'},
+ cra_14_3:{law:'cra',cite:'Art. 14(3)',a:'art_14',use:'Severe incident',
+  text:`A manufacturer shall notify any severe incident having an impact on the security of the product with digital elements that it becomes aware of simultaneously to the CSIRT designated as coordinator, in accordance with paragraph 7 of this Article, and to ENISA. The manufacturer shall notify that incident via the single reporting platform established pursuant to Article 16.`,
+  hl:'any severe incident having an impact on the security of the product'},
+ cra_14_4:{law:'cra',cite:'Art. 14(4)(a)-(c)',a:'art_14',use:'Incident: 24 h, 72 h, 1 month',
+  text:`(a) an early warning notification of a severe incident having an impact on the security of the product with digital elements, without undue delay and in any event within 24 hours of the manufacturer becoming aware of it, including at least whether the incident is suspected of being caused by unlawful or malicious acts, which shall also indicate, where applicable, the Member States on the territory of which the manufacturer is aware that their product with digital elements has been made available;
+(b) unless the relevant information has already been provided, an incident notification, without undue delay and in any event within 72 hours of the manufacturer becoming aware of the incident, which shall provide general information, where available, about the nature of the incident, an initial assessment of the incident, as well as any corrective or mitigating measures taken, and corrective or mitigating measures that users can take, and which shall also indicate, where applicable, how sensitive the manufacturer considers the notified information to be;
+(c) unless the relevant information has already been provided, a final report, within one month after the submission of the incident notification under point (b), including at least the following: (i) a detailed description of the incident, including its severity and impact; (ii) the type of threat or root cause that is likely to have triggered the incident; (iii) applied and ongoing mitigation measures.`,
+  hl:'within 24 hours of the manufacturer becoming aware of it'},
+ cra_14_5:{law:'cra',cite:'Art. 14(5)',a:'art_14',use:'What makes it severe',
+  text:`For the purposes of paragraph 3, an incident having an impact on the security of the product with digital elements shall be considered to be severe where:
+(a) it negatively affects or is capable of negatively affecting the ability of a product with digital elements to protect the availability, authenticity, integrity or confidentiality of sensitive or important data or functions; or
+(b) it has led or is capable of leading to the introduction or execution of malicious code in a product with digital elements or in the network and information systems of a user of the product with digital elements.`,
+  hl:'shall be considered to be severe where'},
+ cra_71_2:{law:'cra',cite:'Art. 71(2)',a:'art_71',use:'When reporting starts',
+  text:`This Regulation shall apply from 11 December 2027.
+However, Article 14 shall apply from 11 September 2026 and Chapter IV (Articles 35 to 51) shall apply from 11 June 2026.`,
+  hl:'Article 14 shall apply from 11 September 2026'}
+};
+
+/* ---------- Help topics ---------- */
+const HELP={
+ aware:{t:'When the clock starts',icon:'clock',p:'Every deadline counts from the moment your company became aware of the incident, not from when it started. Write down the time someone had reasonable certainty that something happened. If you are unsure, use the earlier time.',r:['nis2_23_4a','fi_11','gdpr_33_1','mdr_87_3']},
+ unsure:{t:'Why "Unsure" keeps the clock running',icon:'help',p:'You rarely know everything in the first hours. The laws expect you to report on time and add details later. So an "Unsure" answer keeps the deadline visible until you decide.',r:['mdr_87_7','gdpr_33_4']},
+ sec_facts:{t:'Incident facts',icon:'alert',p:'These facts fill every report draft. Reports can start short and be completed later, but the awareness time must be right from the start.',r:['nis2_23_4a','gdpr_33_3']},
+ sec_drafts:{t:'What a report must contain',icon:'file',p:'Drafts follow the minimum content each law asks for. Fields in [brackets] are things only you can fill in.',r:['gdpr_33_3','nis2_23_4d']},
+ sec_log:{t:'Why keep a decision log',icon:'list',p:'Auditors and authorities ask why you did or did not report. GDPR requires you to document every breach, even ones you do not report. The log gives you the timeline for that.',r:['gdpr_33_5']},
+ q_nis2:{t:'Are you in NIS2 scope?',icon:'building',p:'Medical device manufacturers are listed in Annex II. If you are medium-sized or larger (50+ staff, or turnover over 10 MEUR), you are an important entity. In Finland Fimea is your supervisor.',r:['nis2_2_1','nis2_annex2','fi_26']},
+ q_pde:{t:'Do you sell products under the CRA?',icon:'chip',p:'The CRA covers products with software or connectivity. Medical devices covered by the MDR are excluded, so this only matters for other products, such as a non-medical app or a connected accessory.',r:['cra_2_2','cra_71_2']},
+ q_disrupt:{t:'Severe disruption',icon:'shield',p:'This is the first test for a significant incident. "Capable of causing" counts too, so a near miss can be enough.',r:['nis2_23_3','fi_11']},
+ q_harm:{t:'Damage to others',icon:'shield',p:'The second test for a significant incident: damage to customers, patients, partners or other people.',r:['nis2_23_3']},
+ q_malicious:{t:'Malicious act suspected',icon:'alert',p:'Both NIS2 and CRA early warnings must say whether you suspect an unlawful or malicious act. In Finland the authority also tells you how to report a crime to the police.',r:['nis2_23_4a','cra_14_4']},
+ q_cross:{t:'Cross-border impact',icon:'flag',p:'The NIS2 early warning must say if the incident could affect other EU countries, for example customers or sites abroad.',r:['nis2_23_4a']},
+ q_pd:{t:'Personal data breach',icon:'person',p:'A breach is not only a leak. Lost access (ransomware) and changed data count too.',r:['gdpr_4_12']},
+ q_risk:{t:'Risk to people',icon:'person',p:'You must notify unless the breach is unlikely to create a risk. Even when you do not notify, record the breach in your own register.',r:['gdpr_33_1','gdpr_33_5']},
+ q_highrisk:{t:'High risk to people',icon:'person',p:'When the risk is high, you must also tell the people affected. Health data usually means high risk.',r:['gdpr_34_1']},
+ q_device:{t:'Device on the market affected',icon:'pulse',p:'A cyber incident becomes a vigilance case when it could change how a device on the market performs, for example tampered device software or wrong production or sterilisation records.',r:['mdr_2_64','mdr_87_1a']},
+ q_severity:{t:'How serious for patients',icon:'pulse',p:'The deadline depends on severity: 2 days for a serious public health threat, 10 days for death or unexpected serious harm, 15 days for other serious incidents.',r:['mdr_2_65','mdr_2_66','mdr_87_4','mdr_87_5','mdr_87_3']},
+ q_exploited:{t:'Actively exploited vulnerability',icon:'chip',p:'Report as soon as you know someone is exploiting a vulnerability in your product, even before you have a fix.',r:['cra_14_1','cra_14_2']},
+ q_severe:{t:'Severe incident affecting your product',icon:'chip',p:'Severe means the product can no longer protect important data or functions, or malicious code got into the product or your users’ systems.',r:['cra_14_3','cra_14_5']},
+ 'reg-nis2':{t:'NIS2 reporting',icon:'shield',p:'Significant incidents are reported in three steps: early warning, notification and final report. In Finland the deadlines are in the Cybersecurity Act and the reports go to Fimea.',r:['nis2_23_1','fi_11','fi_26']},
+ 'reg-gdpr':{t:'GDPR breach notification',icon:'person',p:'Notify the Data Protection Ombudsman within 72 hours unless risk is unlikely. Tell the people affected if the risk is high.',r:['gdpr_33_1','gdpr_34_1']},
+ 'reg-mdr':{t:'MDR vigilance',icon:'pulse',p:'Serious incidents with devices on the market are reported to Fimea. If you are unsure, report anyway within the deadline.',r:['mdr_87_1a','mdr_87_7']},
+ 'reg-cra':{t:'CRA reporting',icon:'chip',p:'From 2026-09-11, manufacturers report exploited vulnerabilities and severe incidents in their products to the CSIRT and ENISA at the same time.',r:['cra_14_1','cra_14_3','cra_71_2']},
+ 'd-nis2-ew':{t:'NIS2 early warning, 24 h',icon:'clock',p:'A short first notice. It says what you know so far and whether you suspect a malicious act or cross-border impact.',r:['nis2_23_4a','fi_11']},
+ 'd-nis2-n':{t:'NIS2 incident notification, 72 h',icon:'clock',p:'Updates the early warning with your first assessment of severity and impact, and indicators of compromise if you have them.',r:['nis2_23_4b','fi_11']},
+ 'd-nis2-f':{t:'NIS2 final report, 1 month',icon:'clock',p:'Due one month after you sent the incident notification. Until you mark the notification as sent, the date is an estimate from the 72 hour deadline. For a long-running incident, the final report is due one month after handling ends (NIS2 Art. 23(4)(e) and Cybersecurity Act 13 §).',r:['nis2_23_4d','nis2_23_4e','fi_13']},
+ 'd-nis2-c':{t:'Inform affected customers',icon:'send',p:'Where appropriate, tell the customers who use your services about a significant incident that is likely to affect those services. No fixed hours, but without undue delay. If it does not apply, mark it as not needed and say why.',r:['nis2_23_1b']},
+ 'd-gdpr-c':{t:'Notify the controller',icon:'person',p:'You process this data for a customer, so you are their processor. Tell the customer (the controller) without undue delay. Your data processing agreement often sets a shorter deadline. The controller decides if the authority and the people affected must be told.',r:['gdpr_33_2']},
+ sec_comp:{t:'Compliance summary',icon:'shield',p:'Auditors and authorities do not only ask if you reported. They ask if you have an incident process, if you followed it, who decided and if management approved it. This summary answers that for one incident: every duty, what was done and when, and the reason when something was not needed. It also maps to ISO 27001 controls A.5.24 to A.5.28 (incident planning, decision, response, lessons learned, evidence).',r:['nis2_21_2','nis2_20_1','gdpr_5_2','gdpr_33_5']},
+ 'd-mdr-qa':{t:'QA decision on devices',icon:'pulse',p:'The MDR clock starts when you learn that a device on the market may be affected, not when the IT incident started. Until then there is no MDR deadline. QA decides and records when they learned it. If you are unsure after that, report anyway within the deadline.',r:['mdr_87_3','mdr_87_7']},
+ q_controller:{t:'Controller or processor',icon:'person',p:'The controller decides why and how personal data is used, for example your own employee data. If you only handle the data for a customer, you are their processor: you tell the customer, and the customer notifies the authority.',r:['gdpr_33_2','gdpr_33_1']},
+ q_mdrAware:{t:'When the MDR clock starts',icon:'pulse',p:'MDR deadlines count from when you become aware of the incident with the device. Enter the time you learned that a device on the market may be affected.',r:['mdr_87_3','mdr_87_7']},
+ 'd-gdpr-a':{t:'GDPR notification, 72 h',icon:'clock',p:'If you are late, add the reasons for the delay. You can send the details in phases.',r:['gdpr_33_1','gdpr_33_3','gdpr_33_4']},
+ 'd-gdpr-s':{t:'Informing the people affected',icon:'person',p:'No fixed hours, but "without undue delay". Use clear, plain language.',r:['gdpr_34_1']},
+ 'd-mdr-r':{t:'Serious incident report',icon:'clock',p:'The clock is 2, 10 or 15 days depending on severity. You may send an incomplete first report and complete it later.',r:['mdr_87_3','mdr_87_4','mdr_87_5','mdr_87_7']},
+ 'd-nis2-i':{t:'NIS2 intermediate report',icon:'clock',p:'No fixed date. Send it when the authority asks for a status update.',r:['nis2_23_4c','fi_12']},
+ 'd-nis2-p':{t:'NIS2 progress report',icon:'clock',p:'If the incident is still being handled when the final report would be due, send a progress report then, and the final report one month after handling ends.',r:['nis2_23_4e','fi_12','fi_13']},
+ 'd-gdpr-f':{t:'GDPR follow-up information',icon:'clock',p:'If you did not know everything at 72 hours, send the rest in phases as you learn it.',r:['gdpr_33_4']},
+ 'd-gdpr-r':{t:'Internal breach register',icon:'list',p:'Every personal data breach goes in your own register, also the ones you do not notify. Record the facts, effects, what you did and why you did or did not notify.',r:['gdpr_33_5']},
+ 'd-mdr-f':{t:'MDR final report',icon:'clock',p:'After your investigation, send a final report with the findings, conclusions and corrective actions.',r:['mdr_89_5']},
+ 'd-mdr-fsca':{t:'Field safety corrective action',icon:'pulse',p:'Only if you need to act on devices in the field (recall, software update, warning). Report it before you act, except in urgent cases.',r:['mdr_87_8']},
+ 'd-cra-ew':{t:'CRA early warning, 24 h',icon:'clock',p:'Sent to the CSIRT and ENISA at the same time, through the single reporting platform.',r:['cra_14_2','cra_14_4']},
+ 'd-cra-n':{t:'CRA notification, 72 h',icon:'clock',p:'General information about the product, the exploit or incident, and what users can do.',r:['cra_14_2','cra_14_4']},
+ 'd-cra-fv':{t:'CRA final report (vulnerability)',icon:'clock',p:'Due 14 days after a fix or mitigation is available. A mitigation also starts the clock. Enter the date a fix or mitigation was available and the clock starts.',r:['cra_14_2']},
+ 'd-cra-fi':{t:'CRA final report (incident)',icon:'clock',p:'Due one month after you sent the incident notification. Until you mark the notification as sent, the date is an estimate from the 72 hour deadline.',r:['cra_14_4']}
+};
+
+/* ---------- Triage questions ---------- */
+const Q=[
+ {g:'Your company',icon:'building'},
+ {id:'nis2',k:'In NIS2 scope',q:'Is your company an essential or important entity under NIS2?',hint:'Medium-sized and larger medical device manufacturers are important entities (Annex II).'},
+ {id:'pde',k:'Sells CRA products',q:'Do you sell non-medical products with software or connectivity in the EU?',hint:'This is the CRA scope. Devices covered by the MDR are excluded.'},
+ {g:'The incident',icon:'alert'},
+ {id:'disrupt',k:'Severe disruption',q:'Has it caused, or could it cause, severe disruption to your operations or services?'},
+ {id:'harm',k:'Damage to others',q:'Could it cause considerable financial loss, or damage to customers, patients or partners?',hint:'Data exposure can be significant even with no outage.'},
+ {id:'malicious',k:'Malicious act suspected',q:'Do you suspect a malicious or unlawful act?'},
+ {id:'cross',k:'Cross-border impact',q:'Could it affect other EU countries?'},
+ {g:'Personal data',icon:'person'},
+ {id:'pd',k:'Personal data affected',q:'Were personal data exposed, changed, lost or unavailable?',hint:'Pseudonymised data is still personal data.'},
+ {id:'controller',k:'Controller of the data',q:'Do you decide why and how this data is used (are you the controller)?',hint:'Answer No if you only handle the data for a customer (you are their processor). Unsure shows both paths.',dep:'pd'},
+ {id:'risk',k:'Risk to people',q:'Is it likely to create a risk for the people concerned?',hint:'Answer No only if risk is unlikely, for example encrypted data with the key safe.',dep:'pd',dep2:'controller'},
+ {id:'highrisk',k:'High risk to people',q:'Is the risk high, for example health data exposed?',dep:'pd',dep2:'controller'},
+ {g:'Medical devices',icon:'pulse'},
+ {id:'device',k:'Device on market affected',q:'Could a device on the market be affected?',hint:'For example device software, design files, or production and sterilisation records.'},
+ {id:'mdrAware',k:'MDR awareness time',q:'When did you learn a device on the market may be affected?',hint:'The MDR clock counts from this time, not from the IT incident. Leave it empty until QA has decided.',dep:'device',type:'time'},
+ {id:'severity',k:'Vigilance severity',q:'How serious is the possible effect on patients?',dep:'device',type:'select'},
+ {g:'Products (CRA)',icon:'chip',dep:'pde'},
+ {id:'exploited',k:'Exploited product vulnerability',q:'Is a vulnerability in your product being actively exploited?',dep:'pde'},
+ {id:'severe',k:'Product security affected',q:'Does the incident affect the security of your product?',dep:'pde'}
+];
+const SEV=[['unknown','Not decided yet'],['none','Not serious'],['serious','Serious incident'],['death','Death or unexpected serious harm to health'],['public','Serious public health threat']];
+const ANS={yes:'Yes',unsure:'Unsure',no:'No'};
+
+/* ---------- Follow-up facts and report templates ---------- */
+const FU=[
+ {k:'contact',l:'Incident contact (name, phone, email)'},
+ {k:'impact',l:'Severity and impact so far'},
+ {k:'ioc',l:'Indicators of compromise'},
+ {k:'mitigation',l:'Mitigation applied and ongoing'},
+ {k:'cause',l:'Root cause or type of threat'},
+ {k:'crossb',l:'Cross-border impact (countries, customers)'},
+ {k:'consequences',l:'Likely consequences for the people affected'},
+ {k:'advice',l:'What the people affected should do'},
+ {k:'dpo',l:'Data protection contact'},
+ {k:'devices',l:'Devices, lots or serial numbers concerned'},
+ {k:'patient',l:'Patient impact known so far'},
+ {k:'conclusion',l:'Investigation conclusions and corrective actions'},
+ {k:'product',l:'Product and versions (CRA)'},
+ {k:'states',l:'Member States where the product is sold'},
+ {k:'fixdate',l:'Date a fix or mitigation was available',type:'date'},
+ {k:'ended',l:'Date incident handling ended',type:'date'},
+ {k:'mdrAware',l:'When you learned a device on the market may be affected',type:'datetime-local'}
+];
+const FL={name:'Incident',org:'Organisation',desc:'What happened',systems:'Systems affected',people:'People affected'};FU.forEach(x=>FL[x.k]=x.l);
+const val=k=>S[k]&&String(S[k]).trim()?String(S[k]).trim():'';
+const f=k=>val(k)||`[${FL[k]||k}]`;
+const yn=x=>({yes:'Yes',no:'No',unsure:'Not known yet'})[v(x)];
+const awS=()=>{const d=new Date(S.aware);return isNaN(d)?'[date and time]':fmtLog(d)};
+const refOf=id=>S.ref&&S.ref[id]?String(S.ref[id]).trim():'';
+const sentS=id=>S.done[id]?fmtLog(new Date(S.done[id]))+(refOf(id)?', reference '+refOf(id):''):'[date sent]';
+const mawS=()=>{const d=new Date(S.mdrAware);return S.mdrAware&&!isNaN(d)?fmtLog(d):awS()};
+const N=(l,k,ref)=>({l,k,ref}), A=(l,a,ref)=>({l,a,ref});
+const TPL={
+ 'nis2-ew':{title:'Early warning (ensi-ilmoitus)',need:[N('What happened','desc','nis2_23_4a'),A('Malicious or unlawful act suspected?','malicious','nis2_23_4a'),A('Possible cross-border impact?','cross','nis2_23_4a'),N('Contact person','contact','fi_11')],
+   text:()=>`Subject: NIS2 early warning (ensi-ilmoitus): ${f('name')}\n\nTo: Fimea, supervisory authority under the Cybersecurity Act 124/2025\nOrganisation: ${f('org')}\nBecame aware: ${awS()}\n\nWhat happened:\n${f('desc')}\n\nSystems affected: ${f('systems')}\nMalicious or unlawful act suspected: ${yn('malicious')}\nPossible impact in other EU countries: ${yn('cross')}\n\nNext: incident notification (jatkoilmoitus) within 72 hours of awareness.\nContact: ${f('contact')}`},
+ 'nis2-n':{title:'Incident notification (jatkoilmoitus)',need:[N('Update of the early warning','desc','nis2_23_4b'),N('Initial assessment: severity and impact','impact','nis2_23_4b'),N('Indicators of compromise, if available','ioc','nis2_23_4b'),N('Contact person','contact','fi_11')],
+   text:()=>`Subject: NIS2 incident notification (jatkoilmoitus): ${f('name')}\n\nTo: Fimea\nOrganisation: ${f('org')}\nBecame aware: ${awS()}\nEarly warning sent: ${sentS('nis2-ew')}\n\nUpdate to the early warning:\n${f('desc')}\n\nInitial assessment, severity and impact:\n${f('impact')}\n\nIndicators of compromise:\n${f('ioc')}\n\nMitigation so far:\n${f('mitigation')}\n\nMalicious act suspected: ${yn('malicious')} · Cross-border impact: ${yn('cross')}\nContact: ${f('contact')}`},
+ 'nis2-i':{title:'Intermediate report (on request)',need:[N('Status update: impact','impact','nis2_23_4c'),N('Status update: mitigation','mitigation','nis2_23_4c')],
+   text:()=>`Subject: NIS2 intermediate report: ${f('name')}\n\nTo: Fimea (requested on [date of request])\nOrganisation: ${f('org')}\nNotification sent: ${sentS('nis2-n')}\n\nCurrent status and impact:\n${f('impact')}\n\nMitigation applied and ongoing:\n${f('mitigation')}\n\nRoot cause, if known:\n${f('cause')}\n\nContact: ${f('contact')}`},
+ 'nis2-p':{title:'Progress report (väliraportti)',need:[N('Status and impact','impact','nis2_23_4e'),N('Mitigation applied and ongoing','mitigation','nis2_23_4e'),N('Root cause, if known','cause','fi_12')],
+   text:()=>`Subject: NIS2 progress report (väliraportti): ${f('name')}\n\nTo: Fimea\nOrganisation: ${f('org')}\nNotification sent: ${sentS('nis2-n')}\n\nThe incident is still being handled. The final report follows within one month after handling ends.\n\nStatus and impact:\n${f('impact')}\n\nMitigation applied and ongoing:\n${f('mitigation')}\n\nRoot cause so far:\n${f('cause')}\n\nContact: ${f('contact')}`},
+ 'nis2-f':{title:'Final report (loppuraportti)',need:[N('(i) Detailed description, severity and impact','impact','nis2_23_4d'),N('(ii) Type of threat or root cause','cause','nis2_23_4d'),N('(iii) Applied and ongoing mitigation','mitigation','nis2_23_4d'),N('(iv) Cross-border impact, where applicable','crossb','nis2_23_4d')],
+   text:()=>`Subject: NIS2 final report (loppuraportti): ${f('name')}\n\nTo: Fimea\nOrganisation: ${f('org')}\nBecame aware: ${awS()} · Notification sent: ${sentS('nis2-n')}\n\n(i) Detailed description, severity and impact:\n${f('desc')}\n${f('impact')}\n\n(ii) Type of threat or root cause:\n${f('cause')}\n\n(iii) Applied and ongoing mitigation:\n${f('mitigation')}\n\n(iv) Cross-border impact:\n${v('cross')==='no'?'None identified.':f('crossb')}\n\nContact: ${f('contact')}`},
+ 'gdpr-a':{title:'Notification to the authority',need:[N('(a) Nature of the breach','desc','gdpr_33_3'),N('(a) Approx. number of people and records','people','gdpr_33_3'),N('(b) Data protection contact','dpo','gdpr_33_3'),N('(c) Likely consequences','consequences','gdpr_33_3'),N('(d) Measures taken or proposed','mitigation','gdpr_33_3')],
+   text:()=>`Subject: Personal data breach notification: ${f('name')}\n\nTo: Office of the Data Protection Ombudsman\nController: ${f('org')}\nBecame aware: ${awS()}\n\n(a) Nature of the breach:\n${f('desc')}\nPeople and records affected (approx.): ${f('people')}\n\n(b) Data protection contact: ${f('dpo')}\n\n(c) Likely consequences:\n${f('consequences')}\n\n(d) Measures taken or proposed:\n${f('mitigation')}\n\nPeople informed: ${v('highrisk')==='yes'?'Yes, high risk. Informing them without undue delay.':v('highrisk')==='no'?'No, risk is not high.':'Under assessment.'}\nIf later than 72 hours, reason for delay: [explain]`},
+ 'gdpr-f':{title:'Follow-up information (in phases)',need:[N('People and records, updated','people','gdpr_33_4'),N('Consequences, updated','consequences','gdpr_33_4'),N('Measures, updated','mitigation','gdpr_33_4')],
+   text:()=>`Subject: Follow-up to personal data breach notification: ${f('name')}\n\nTo: Office of the Data Protection Ombudsman\nOur notification: ${sentS('gdpr-a')}${refOf('gdpr-a')?'':' [case number]'}\n\nNew or corrected information:\nPeople and records affected: ${f('people')}\nLikely consequences: ${f('consequences')}\nMeasures taken: ${f('mitigation')}\nRoot cause: ${f('cause')}\n\nContact: ${f('dpo')}`},
+ 'gdpr-s':{title:'Message to the people affected',need:[N('Nature of the breach, in plain language','desc','gdpr_34_2'),N('Contact point','dpo','gdpr_34_2'),N('Likely consequences','consequences','gdpr_34_2'),N('What we did','mitigation','gdpr_34_2'),N('What they can do','advice','gdpr_34_2')],
+   text:()=>`Subject: Information about a data security incident that affects your data\n\nHello,\n\nOn ${awS().slice(0,10)} we found the following: ${f('desc')}\n\nWhat this may mean for you:\n${f('consequences')}\n\nWhat we have done:\n${f('mitigation')}\n\nWhat you can do:\n${f('advice')}\n\nIf you have questions, contact ${f('dpo')}.\n\n${f('org')}`},
+ 'gdpr-r':{title:'Internal breach register entry',need:[N('Facts of the breach','desc','gdpr_33_5'),N('Effects','consequences','gdpr_33_5'),N('Remedial action taken','mitigation','gdpr_33_5')],
+   text:()=>`Breach register entry\n\nBreach: ${f('name')}\nBecame aware: ${awS()}\nFacts: ${f('desc')}\nData and people concerned: ${f('people')}\nEffects: ${f('consequences')}\nRemedial action: ${f('mitigation')}\n\nDecision on notification:\nRisk to people likely: ${yn('risk')} · High risk: ${yn('highrisk')}\nAuthority notified: ${S.done['gdpr-a']?'Yes, '+sentS('gdpr-a'):(v('risk')==='no'&&v('highrisk')!=='yes'?'No, risk unlikely (Art. 33(1))':'Not yet')}\nPeople informed: ${S.done['gdpr-s']?'Yes, '+sentS('gdpr-s'):'No'}\nDecided by: [name, role]`},
+ 'mdr-r':{title:'Initial report (MIR)',need:[N('Event description','desc','mdr_87_1a'),N('Devices, lots or serials','devices','mdr_87_1a'),N('Patient impact so far','patient','mdr_2_65'),N('Contact person','contact','mdr_87_3')],
+   text:()=>`Manufacturer Incident Report (MIR): initial report\n\nTo: Fimea\nManufacturer: ${f('org')}\nManufacturer aware: ${mawS()}\nSeverity: ${(SEV.find(s=>s[0]===S.a.severity)||SEV[0])[1]}\n\nEvent description:\n${f('desc')}\n\nAffected records or systems: ${f('systems')}\nDevices, lots or serial numbers: ${f('devices')}\nPatient impact known so far: ${f('patient')}\nInvestigation status and next steps: ${f('mitigation')}\nContact: ${f('contact')}`},
+ 'mdr-f':{title:'Final report (MIR)',need:[N('Findings and conclusions','conclusion','mdr_89_5'),N('Root cause','cause','mdr_89_5'),N('Devices concerned','devices','mdr_89_5')],
+   text:()=>`Manufacturer Incident Report (MIR): final report\n\nTo: Fimea\nManufacturer: ${f('org')}\nInitial report sent: ${sentS('mdr-r')}${refOf('mdr-r')?'':' [MIR reference]'}\n\nRoot cause:\n${f('cause')}\n\nFindings, conclusions and corrective actions:\n${f('conclusion')}\n\nDevices, lots or serial numbers: ${f('devices')}\nPatient impact: ${f('patient')}`},
+ 'mdr-fsca':{title:'Field safety corrective action notice',need:[N('Devices concerned','devices','mdr_87_8'),N('Planned field action','conclusion','mdr_87_8')],
+   text:()=>`Field safety corrective action: advance report\n\nTo: Fimea (before the action starts)\nManufacturer: ${f('org')}\nRelated incident: ${f('name')}\n\nDevices, lots or serial numbers: ${f('devices')}\nPlanned action and reason:\n${f('conclusion')}\nPlanned start date: [date]\nField safety notice to customers: [attach draft]`},
+ 'cra-ew':{title:'Early warning',need:[N('Product and versions','product','cra_14_4'),N('Member States where sold','states','cra_14_4'),A('Malicious act suspected?','malicious','cra_14_4')],
+   text:()=>`Subject: CRA early warning: ${f('name')}\n\nTo: ENISA single reporting platform (CSIRT coordinator: NCSC-FI)\nManufacturer: ${f('org')}\nBecame aware: ${awS()}\nType: ${v('exploited')==='yes'?'Actively exploited vulnerability':v('severe')==='yes'?'Severe incident affecting product security':'Under assessment'}\nProduct and versions: ${f('product')}\nMalicious act suspected: ${yn('malicious')}\nMember States where the product is sold: ${f('states')}\n\nWhat happened:\n${f('desc')}`},
+ 'cra-n':{title:'Notification',need:[N('Product concerned','product','cra_14_2'),N('Nature and initial assessment','impact','cra_14_4'),N('Measures taken','mitigation','cra_14_4'),N('Measures users can take','advice','cra_14_4')],
+   text:()=>`Subject: CRA notification: ${f('name')}\n\nTo: ENISA single reporting platform\nEarly warning sent: ${sentS('cra-ew')}\nProduct and versions: ${f('product')}\n\nNature and initial assessment:\n${f('impact')}\n\nCorrective or mitigating measures taken:\n${f('mitigation')}\n\nMeasures users can take:\n${f('advice')}\n\nHow sensitive is this information: [low / medium / high]`},
+ 'cra-fv':{title:'Final report (vulnerability)',need:[N('Date a fix or mitigation was available','fixdate','cra_14_2'),N('(i) Vulnerability, severity and impact','impact','cra_14_2'),N('(ii) Malicious actor information','ioc','cra_14_2'),N('(iii) Security update details','mitigation','cra_14_2')],
+   text:()=>`Subject: CRA final report (vulnerability): ${f('name')}\n\nTo: ENISA single reporting platform\nProduct and versions: ${f('product')}\nFix or mitigation available: ${f('fixdate')}\n\n(i) Description of the vulnerability, severity and impact:\n${f('impact')}\n\n(ii) Malicious actor information:\n${f('ioc')}\n\n(iii) Security update or other corrective measures:\n${f('mitigation')}`},
+ 'cra-fi':{title:'Final report (incident)',need:[N('(i) Description, severity and impact','impact','cra_14_4'),N('(ii) Type of threat or root cause','cause','cra_14_4'),N('(iii) Applied and ongoing mitigation','mitigation','cra_14_4')],
+   text:()=>`Subject: CRA final report (incident): ${f('name')}\n\nTo: ENISA single reporting platform\nProduct and versions: ${f('product')}\nNotification sent: ${sentS('cra-n')}\n\n(i) Description, severity and impact:\n${f('desc')}\n${f('impact')}\n\n(ii) Type of threat or root cause:\n${f('cause')}\n\n(iii) Applied and ongoing mitigation:\n${f('mitigation')}`},
+ 'nis2-c':{title:'Notice to affected customers',need:[N('What happened','desc','nis2_23_1b'),N('Effect on your services','impact','nis2_23_1b'),N('Contact person','contact','nis2_23_1b')],
+   text:()=>`Subject: Service incident notice: ${f('name')}\n\nTo: [affected customers]\nFrom: ${f('org')}\n\nWe are handling a cybersecurity incident that may affect our services to you.\n\nWhat happened:\n${f('desc')}\n\nEffect on our services:\n${f('impact')}\n\nWhat we are doing:\n${f('mitigation')}\n\nWhat you can do:\n${f('advice')}\n\nContact: ${f('contact')}`},
+ 'gdpr-c':{title:'Notice to the controller (your customer)',need:[N('What happened','desc','gdpr_33_2'),N('Data and people affected','people','gdpr_33_2'),N('What you did','mitigation','gdpr_33_2'),N('Contact person','contact','gdpr_33_2')],
+   text:()=>`Subject: Personal data breach notice to the controller: ${f('name')}\n\nTo: [customer name], controller of the data\nFrom: ${f('org')}, processor under our data processing agreement\nBecame aware: ${awS()}\n\nWhat happened:\n${f('desc')}\n\nData and people affected (approx.): ${f('people')}\n\nWhat we have done:\n${f('mitigation')}\n\nLikely consequences, if known:\n${f('consequences')}\n\nWe will send more information as we learn it.\nContact: ${f('contact')}`},
+ 'mdr-qa':{title:'QA decision: is a device on the market affected?',need:[A('Device on the market affected?','device','mdr_87_7'),N('When you learned a device may be affected','mdrAware','mdr_87_3')],
+   text:()=>`Internal record: MDR vigilance decision\n\nIncident: ${f('name')}\nIT incident, became aware: ${awS()}\nDevice on the market affected: ${yn('device')}\nLearned a device may be affected: ${S.mdrAware?mawS():'[date and time]'}\nSeverity: ${(SEV.find(s=>s[0]===S.a.severity)||SEV[0])[1]}\nReason for the decision: [explain]\nDecided by: [name, role]`}
+};
+const USES={};Object.entries(TPL).forEach(([id,t])=>{const law=id.split('-')[0];t.need.forEach(n=>{if(n.k){(USES[n.k]=USES[n.k]||new Set()).add(law)}})});
+const isDone=n=>n.k==='crossb'&&v('cross')==='no'?true:n.k?!!val(n.k):v(n.a)!=='unsure';
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const toInput=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fmt=d=>d.toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+const fmtLog=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+function addMonth(d){const x=new Date(d),day=x.getDate();x.setMonth(x.getMonth()+1);if(x.getDate()<day)x.setDate(0);return x}
+
+/* State v5: incident facts, answers (a), sent times (done), references (ref), steps marked not needed (skip, with reason), MDR awareness time, plus the flow: phase (open phase 1-4), reached (furthest phase unlocked), tg (open triage group), step (open report step). */
+const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function example(){
+  const a=new Date(Date.now()-5*H-17*60e3);a.setSeconds(0,0);
+  const t=m=>new Date(a.getTime()+m*60e3).toISOString();
+  return {v:5,id:newId(),example:true,name:'Ransomware on production file server',org:'Example Medtech Oy',aware:toInput(a),
+    desc:'Files on the production file server were encrypted at 06:40. Ransom note found on the server. Server isolated from the network, backups are being checked.',
+    systems:'Production file server, label printing share',people:'About 120 employees (HR folder on the share)',
+    contact:'Example Person, IT Manager, +358 40 000 0000',owner:'Example Person, IT Manager',impact:'Label printing at the Tampere site stopped for about 6 hours. No customer systems affected so far.',
+    ioc:'Ransom note README_RESTORE.txt, files renamed to .lockd, RDP logins from an unknown external address at 05:52.',
+    mitigation:'Server isolated, admin passwords reset, restore from the 03:00 backup started.',
+    cause:'',crossb:'',consequences:'',advice:'',dpo:'',devices:'',patient:'',conclusion:'',product:'',states:'',fixdate:'',ended:'',mdrAware:'',
+    a:{nis2:'yes',pde:'no',disrupt:'yes',harm:'unsure',malicious:'yes',cross:'no',pd:'yes',controller:'yes',risk:'yes',highrisk:'unsure',device:'unsure',severity:'unknown',exploited:'no',severe:'no'},
+    done:{},ref:{},skip:{},phase:3,reached:3,tg:null,step:'nis2-ew',
+    log:[{t:t(0),x:'Incident detected by EDR alert, server isolated'},{t:t(35),x:'Incident opened, awareness time set'},{t:t(50),x:'In NIS2 scope: Yes'},{t:t(52),x:'Severe disruption: Yes'},{t:t(53),x:'Malicious act suspected: Yes'},{t:t(70),x:'Personal data affected: Yes (HR folder on the share)'},{t:t(95),x:'Device on market affected: Unsure, QA asked to check production records'}]};
+}
+function blank(){const n=new Date();n.setSeconds(0,0);return {v:5,id:newId(),example:false,name:'',org:'',aware:toInput(n),desc:'',systems:'',people:'',mdrAware:'',a:{severity:'unknown'},done:{},ref:{},skip:{},phase:1,reached:1,tg:null,step:null,log:[{t:n.toISOString(),x:'New incident opened'}]}}
+function migrate(x){
+  if(!x||!x.a)return null;
+  if(x.v===4){x.v=5;x.id=x.id||newId();x.ref=x.ref||{};x.skip=x.skip||{};x.mdrAware=x.mdrAware||''}
+  return x.v===5?x:null;
+}
+
+let S, view='incident', flt='all';
+try{S=migrate(JSON.parse(localStorage.getItem(KEY)))}catch(e){S=null}
+if(!S)S=example();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function log(x){S.log.push({t:new Date().toISOString(),x});}
+
+/* Archive of earlier incidents (last 10), so New incident / Load example never lose data. */
+const AKEY='incident-clock-archive';
+let ARCH=[];
+try{const x=JSON.parse(localStorage.getItem(AKEY));if(Array.isArray(x))ARCH=x}catch(e){}
+function saveArch(){try{localStorage.setItem(AKEY,JSON.stringify(ARCH))}catch(e){}}
+function archive(x){if(!x||x.example)return;ARCH=ARCH.filter(e=>e.data&&e.data.id!==x.id);ARCH.unshift({saved:new Date().toISOString(),data:JSON.parse(JSON.stringify(x))});ARCH=ARCH.slice(0,10);saveArch()}
+
+const v=id=>S.a[id]||'unsure';
+function tri(...ids){const vals=ids.map(v);return vals.includes('yes')?'yes':vals.includes('unsure')?'unsure':'no'}
+
+function evaluate(){
+  const aw=new Date(S.aware);const ok=!isNaN(aw);const at=h=>ok?new Date(aw.getTime()+h*H):null;
+  const sentAt=id=>S.done[id]?new Date(S.done[id]):null;
+  const R=[];
+  {const r={key:'nis2',law:'Art. 23 · Cybersecurity Act 11–13 §',dl:[]};
+   const sig=tri('disrupt','harm'),scope=v('nis2');
+   if(scope==='no'){r.st='na';r.why='Your company is not in NIS2 scope.'}
+   else if(sig==='no'){r.st='none';r.why='Not a significant incident. Record it in your own incident register.'}
+   else{r.st=(sig==='yes'&&scope==='yes')?'applies':'assess';
+     r.why=sig==='yes'?'Significant incident: severe disruption or considerable damage to others.':'Could be significant. The clock runs until you decide it is not.';
+     /* Final report counts from the actual notification sent time; until then, an estimate from the 72 h deadline. */
+     const n=at(72),sentN=sentAt('nis2-n'),base=sentN||n,m1=base?addMonth(base):null,end=S.ended?new Date(S.ended+'T00:00'):null;
+     const est=sentN?'':'Estimated, counts from when you send the notification';
+     r.dl=[{id:'nis2-ew',l:'Early warning',at:at(24)},{id:'nis2-n',l:'Incident notification',at:n},
+       {id:'nis2-c',l:'Inform affected customers (where appropriate)',at:null,when:'Without undue delay',note:'Only if the incident is likely to affect your services to them',opt:true},
+       {id:'nis2-i',l:'Intermediate report',at:null,when:'On request',note:'Only if the authority asks',opt:true}];
+     if(end&&m1&&end>m1)r.dl.push({id:'nis2-p',l:'Progress report',at:m1,note:['Still ongoing 1 month after the notification',est].filter(Boolean).join('. ')},{id:'nis2-f',l:'Final report',at:addMonth(end),note:'1 month after handling ended'});
+     else r.dl.push({id:'nis2-f',l:'Final report',at:m1,note:[end?(sentN?'1 month after the notification was sent':'1 month after the notification'):'If still ongoing then, send a progress report instead',est].filter(Boolean).join('. ')})}
+   R.push(r)}
+  {const r={key:'gdpr',law:'Art. 33 and 34',dl:[]};
+   /* High risk implies risk. Controller and processor paths; Unsure shows both. */
+   const pd=v('pd'),hi=v('highrisk'),risk=hi==='yes'?'yes':v('risk'),ctl=v('controller');
+   const proc={id:'gdpr-c',l:'Notify the controller (your customer)',at:null,when:'Without undue delay',asap:true,note:'Check your data processing agreement for a shorter deadline'};
+   const reg={id:'gdpr-r',l:'Internal breach register entry',at:null,when:'Always'};
+   if(pd==='no'){r.st='none';r.why='No personal data involved.'}
+   else if(ctl==='no'){r.st=pd==='yes'?'applies':'assess';
+     r.why=pd==='yes'?'You handle this data for a customer (processor). Tell the controller without undue delay. The controller decides on notifying the authority and the people affected.':'Possible personal data breach in data you handle for a customer. Confirm what data was involved.';
+     r.dl=[proc]}
+   else if(risk==='no'){
+     if(ctl==='yes'){r.st='record';r.why='Risk to people is unlikely. Record the breach in your internal register (Art. 33(5)), no notification.';r.dl=[reg]}
+     else{r.st='assess';r.why='Risk to people is unlikely. If you are the controller, record it only. If you handle the data for a customer, tell the customer.';r.dl=[proc,reg]}}
+   else{r.st=(pd==='yes'&&risk==='yes'&&ctl==='yes')?'applies':'assess';
+     r.why=r.st==='applies'?'Personal data breach that is likely to create a risk for people.':ctl==='unsure'?'Possible personal data breach. Confirm if you are the controller or handle the data for a customer. Both paths are shown.':'Possible personal data breach. Confirm what data was involved.';
+     r.dl=[{id:'gdpr-a',l:'Notify the supervisory authority',at:at(72)},{id:'gdpr-f',l:'Follow-up information',at:null,when:'As you learn',note:'In phases, without undue further delay',opt:true}];
+     if(hi!=='no')r.dl.push({id:'gdpr-s',l:hi==='yes'?'Inform the people affected':'Decide if people must be informed',at:null,note:'Without undue delay',opt:hi!=='yes'});
+     if(ctl==='unsure')r.dl.unshift(proc);
+     r.dl.push(reg)}
+   R.push(r)}
+  {const r={key:'mdr',law:'Art. 87 · serious incident',dl:[]};
+   /* MDR has its own awareness time: when you learned a device on the market may be affected. */
+   const dev=v('device'),sev=S.a.severity||'unknown',ma=S.mdrAware?new Date(S.mdrAware):null,mOk=!!ma&&!isNaN(ma),mb=mOk?ma:(ok?aw:null);
+   const atM=h=>mb?new Date(mb.getTime()+h*H):null;
+   const fsca={id:'mdr-fsca',l:'Field safety corrective action',at:null,when:'Before acting',note:'Only if you act on devices in the field',opt:true};
+   if(dev==='no'){r.st='none';r.why='No device on the market is affected.'}
+   else if(dev==='unsure'&&!mOk){r.st='assess';r.why='Not clear yet if a device on the market is affected. There is no MDR deadline until you learn that a device may be affected. QA decides.';
+     r.dl=[{id:'mdr-qa',l:'QA decision: is a device on the market affected?',at:null,when:'QA decision',opt:true},fsca]}
+   else if(sev==='none'){r.st='record';r.why='Not a serious incident. Handle it through complaints and trend reporting.';r.dl=[fsca]}
+   else{const days={unknown:2,serious:15,death:10,public:2}[sev];
+     r.st=(dev==='yes'&&sev!=='unknown')?'applies':'assess';
+     r.why=(sev==='unknown'?'Severity not decided. The shortest possible clock (2 days) is shown until you decide severity.':`Report within ${days} days of becoming aware.`)+(mOk?'':' Until you enter when you learned a device may be affected, the clock counts from the incident awareness time.');
+     r.dl=[{id:'mdr-r',l:'Serious incident report',at:atM(days*24),note:[sev==='unknown'?'Shortest possible clock until you decide severity':'',mOk?'Counts from when you learned a device may be affected':'Counts from the incident awareness time'].filter(Boolean).join('. ')},{id:'mdr-f',l:'Final report',at:null,when:'After investigation'},fsca]}
+   R.push(r)}
+  {const r={key:'cra',law:'Art. 14 · from 2026-09-11',dl:[]};
+   const p=v('pde'),ex=v('exploited'),se=v('severe');
+   if(p==='no'){r.st='na';r.why='You do not sell products in CRA scope.'}
+   else if(ex==='no'&&se==='no'){r.st='none';r.why='No exploited vulnerability or severe product incident.'}
+   else{r.st=(p==='yes'&&(ex==='yes'||se==='yes'))?'applies':'assess';
+     r.why=ex==='yes'?'Actively exploited vulnerability in your product.':se==='yes'?'Severe incident affecting the security of your product.':'Possible product security issue. Confirm before the first deadline.';
+     const n=at(72),sentC=sentAt('cra-n'),cb=sentC||n;r.dl=[{id:'cra-ew',l:'Early warning',at:at(24)},{id:'cra-n',l:'Notification',at:n}];
+     /* 14 days after a fix or mitigation is available, counted to the end of that day. */
+     let fx=S.fixdate?new Date(S.fixdate+'T23:59'):null;if(fx&&isNaN(fx))fx=null;if(fx)fx.setDate(fx.getDate()+14);
+     if(ex!=='no')r.dl.push({id:'cra-fv',l:'Final report (vulnerability)',at:fx,eod:true,when:'14 days after fix',note:fx?'14 days after the fix or mitigation':'Enter the date a fix or mitigation was available'});
+     if(se!=='no')r.dl.push({id:'cra-fi',l:'Final report (incident)',at:cb?addMonth(cb):null,note:sentC?'1 month after the notification was sent':'Estimated, counts from when you send the notification'})}
+   R.push(r)}
+  return R;
+}
+const PILL={applies:'Report',assess:'Assess',record:'Record only',none:'Not triggered',na:'Out of scope'};
+const active=r=>r.st==='applies'||r.st==='assess';
+
+/* ---------- Flow helpers ---------- */
+const PH=[null,'What happened and when you became aware','Which laws apply','Every report, in time order','Final reports and the decision log'];
+const unlocked=p=>p===1||(p===2&&S.reached>=2)||(p>=3&&S.reached>=3);
+const GROUPS=[];Q.forEach(q=>{if(q.g)GROUPS.push({...q,qs:[]});else GROUPS[GROUPS.length-1].qs.push(q)});
+const shownQ=q=>(!q.dep||S.a[q.dep]!=='no')&&(!q.dep2||S.a[q.dep2]!=='no');
+const visGroups=()=>GROUPS.filter(g=>!g.dep||S.a[g.dep]!=='no');
+const lawOf=id=>id.split('-')[0];
+const FDEF=k=>FU.find(x=>x.k===k)||{k,l:FL[k]||k};
+const tplKeys=id=>[...new Set([...TPL[id].text.toString().matchAll(/\bf\('(\w+)'\)/g)].map(m=>m[1]))];
+const NIS2CH='Check the reporting channel Fimea tells you to use.';
+const NOSEND=['mdr-qa'];        /* internal decision: no "Mark as sent" */
+const RECORD=['gdpr-r'];        /* internal record: "Mark as recorded" */
+const closed=id=>!!(S.done[id]||S.skip[id]);
+const stepLab=id=>`${LAWS[lawOf(id)].short}: ${TPL[id].title}`;
+/* CRA early warning: the vulnerability case follows Art. 14(2)(a), the incident case Art. 14(4)(a). */
+const needOf=id=>{const T=TPL[id];if(id==='cra-ew'&&v('severe')==='no'&&v('exploited')!=='no')return T.need.filter(n=>n.a!=='malicious').map(n=>({...n,ref:'cra_14_2'}));return T.need};
+const missing=id=>needOf(id).filter(n=>!isDone(n)).length;
+const fmtDay=d=>d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+const dueS=d=>d.eod?fmtDay(d.at)+', end of day':fmt(d.at);
+function steps(R){const out=[];R.forEach(r=>{if(active(r)||r.st==='record')r.dl.forEach(d=>{if(TPL[d.id])out.push({...d,law:r.key})})});return out}
+function pending(R){const p=[];R.forEach(r=>{if(active(r))r.dl.forEach(d=>{if(d.at&&!closed(d.id))p.push({...d,law:r.key})})});return p.sort((a,b)=>a.at-b.at)}
+const BANDS=[['over','Overdue'],['d1','Next 24 hours'],['asap','As soon as possible'],['d3','Next 72 hours'],['later','Later'],['open','No fixed date'],['sent','Done']];
+function band(d,now){if(closed(d.id))return 'sent';if(!d.at)return d.asap||!d.when?'asap':'open';const ms=d.at-now;return ms<0?'over':ms<24*H?'d1':ms<72*H?'d3':'later'}
+const byTime=(a,b)=>(a.at?a.at.getTime():Infinity)-(b.at?b.at.getTime():Infinity)||0;
+const sig=(R,now)=>steps(R).map(d=>d.id+':'+band(d,now)).join(',');
+let lastSig='',sentOpen=false;
+const lawTag=k=>`<span class="lc-${k}"><span class="lawtag">${esc(LAWS[k].short)}</span></span>`;
+function triageStats(){let n=0,ans=0,uns=0;visGroups().forEach(g=>g.qs.forEach(q=>{if(!shownQ(q)||q.type==='time')return;n++;const a=S.a[q.id];
+  if(q.type==='select'){if(a&&a!=='unknown')ans++;else uns++}else{if(a)ans++;if(v(q.id)==='unsure')uns++}}));return {n,ans,uns}}
+function edited(){if(S.example){S.example=false;$('#exampleNote').hidden=true}}
+
+/* ---------- Sticky bar ---------- */
+function renderBar(R){
+  $('#barName').textContent=val('name')||'New incident';
+  const aw=new Date(S.aware);$('#barAware').textContent=isNaN(aw)?'Set the time you became aware':'Became aware '+fmt(aw);
+  const p=pending(R),nx=$('#barNext');
+  $('#navBadge').textContent=p.length?p.length+' open':'';$('#navBadge').hidden=!p.length;
+  if(!p.length){nx.disabled=true;nx.dataset.open='';nx.innerHTML=`<span class="bn-lab">Next deadline</span><span class="bn-what">No open deadlines</span>`;return}
+  const n=p[0];nx.disabled=false;nx.dataset.open=n.id;
+  nx.innerHTML=`<span class="bn-lab">Next deadline</span><span class="count bn-count" data-due="${n.at.getTime()}" data-id="${n.id}">--</span><span class="bn-what">${lawTag(n.law)} ${esc(n.l)}</span>`;
+}
+
+/* ---------- Phases ---------- */
+function renderPhases(R){
+  const list=steps(R),done=list.filter(d=>closed(d.id)).length,p=pending(R),open=list.length-done;
+  const ts=triageStats(),rep=R.filter(r=>r.st==='applies').map(r=>LAWS[r.key].short),as=R.filter(r=>r.st==='assess').map(r=>LAWS[r.key].short);
+  const aw=new Date(S.aware);
+  const sum={
+    1:[val('name')||'No name yet',val('org'),isNaN(aw)?'':'aware '+fmt(aw)].filter(Boolean).join(' · '),
+    2:[`${ts.ans} of ${ts.n} answered`+(ts.uns?`, ${ts.uns} unsure`:''),rep.length?'Report: '+rep.join(', '):'',as.length?'Assess: '+as.join(', '):''].filter(Boolean).join(' · '),
+    3:list.length?`${done} of ${list.length} done`+(p.length?` · next: ${LAWS[p[0].law].short} ${p[0].l}, ${dueS(p[0])}`:''):'No reports needed',
+    4:`${open} still open · ${S.log.length} log entries`};
+  for(let i=1;i<=4;i++){
+    const li=$('#ph'+i),btn=$('#phb'+i),cur=S.phase===i,lock=!unlocked(i);
+    const ok=!cur&&!lock&&(i<=2?S.reached>i:i===3?(list.length>0&&!open):false);
+    li.className='phase'+(cur?' cur':'')+(lock?' locked':'')+(ok?' done':'');
+    btn.setAttribute('aria-expanded',cur);
+    if(lock)btn.setAttribute('aria-disabled','true');else btn.removeAttribute('aria-disabled');
+    $('#phn'+i).innerHTML=ok?ic('tick','sm'):String(i);
+    $('#phs'+i).textContent=cur?PH[i]:lock?(i===2?'Opens after Start':'Opens after Triage'):sum[i];
+    $('#pha'+i).innerHTML=cur?'':lock?`${ic('lock','sm')}<span class="sr">Locked</span>`:(i<=2?'Edit':'Open');
+    $('#phbody'+i).hidden=!cur;
+  }
+}
+function openPhase(p){
+  S.phase=p;S.reached=Math.max(S.reached,p);all();
+  const li=$('#ph'+p);li.scrollIntoView({block:'start'});$('#phb'+p).focus({preventScroll:true});
+}
+
+/* ---------- 1 Start ---------- */
+function renderStart(force){
+  document.querySelectorAll('#startForm [data-k]').forEach(el=>{if(force||el!==document.activeElement)el.value=S[el.dataset.k]||''});
+  $('#startNext').innerHTML=S.reached<2?`${ic('clock','sm')}Start the clock`:`Continue${ic('arrow-right','sm')}`;
+  $('#exampleNote').hidden=!S.example;
+}
+function startNext(){
+  if(isNaN(new Date(S.aware))){$('#startMsg').textContent='Enter the time you became aware. All deadlines count from it.';$('#f_aware').focus();return}
+  $('#startMsg').textContent='';
+  if(S.reached<2){S.reached=2;log(`Clock started. Became aware ${S.aware.replace('T',' ')}`);openPhase(2)}
+  else openPhase(S.reached>=3?3:2);
+}
+
+/* ---------- 2 Triage ---------- */
+function qHtml(q){
+  const hint=q.hint?`<p class="hint">${esc(q.hint)}</p>`:'';
+  if(q.type==='time')return `<div class="q"><div class="qh"><label class="qtext" for="q_${q.id}">${esc(q.q)}</label>${ib('q_'+q.id,q.k)}</div>${hint}<input type="datetime-local" class="dtf" id="q_${q.id}" data-k="${q.id}" value="${esc(S[q.id]||'')}"></div>`;
+  if(q.type==='select')return `<div class="q"><div class="qh"><label class="qtext" for="q_${q.id}">${esc(q.q)}</label>${ib('q_'+q.id,q.k)}</div>${hint}<select id="q_${q.id}" name="${q.id}">${SEV.map(([x,l])=>`<option value="${x}" ${S.a[q.id]===x?'selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
+  return `<fieldset class="q" role="radiogroup" aria-labelledby="ql_${q.id}"><div class="qh"><span class="qtext" id="ql_${q.id}">${esc(q.q)}</span>${ib('q_'+q.id,q.k)}</div>${hint}<div class="seg">${Object.entries(ANS).map(([x,l])=>`<label><input type="radio" id="q_${q.id}_${x}" name="${q.id}" value="${x}" ${S.a[q.id]===x?'checked':''}><span>${l}</span></label>`).join('')}</div></fieldset>`;
+}
+function renderTriage(){
+  const gs=visGroups();let i=gs.findIndex(g=>g.g===S.tg);if(i<0)i=0;S.tg=gs[i].g;
+  const g=gs[i],last=i===gs.length-1;
+  $('#triage').innerHTML=`<div class="qs">
+    <div class="tg-top"><span class="eyebrow">Part ${i+1} of ${gs.length}</span><div class="prog">${gs.map((x,j)=>`<button type="button" class="pseg${j<i?' past':''}${j===i?' cur':''}" data-tg="${esc(x.g)}" aria-label="Part ${j+1}: ${esc(x.g)}"${j===i?' aria-current="step"':''}></button>`).join('')}</div></div>
+    <h3 class="tg-title" id="tgTitle" tabindex="-1">${ic(g.icon)}${esc(g.g)}</h3>
+    ${g.qs.filter(shownQ).map(qHtml).join('')}
+    <div class="navrow">${i?`<button type="button" class="btn" id="tgBack" data-tgo="${esc(gs[i-1].g)}">${ic('arrow-left','sm')}Back</button>`:''}<button type="button" class="btn primary" id="tgNext" ${last?'data-done="1"':`data-tgo="${esc(gs[i+1].g)}"`}>${last?'Show my reports':'Next'}${ic('arrow-right','sm')}</button></div></div>`;
+}
+function goGroup(name){
+  S.tg=name;renderTriage();save();
+  const r=$('#ph2').getBoundingClientRect();if(r.top<0)$('#ph2').scrollIntoView({block:'start'});
+  $('#tgTitle').focus({preventScroll:true});
+}
+
+/* ---------- 3 Report ---------- */
+function renderLaws(R){
+  $('#lawSum').innerHTML=R.map(r=>`<span class="lawpill">${lawTag(r.key)}<span class="pill p-${r.st}">${PILL[r.st]}</span></span>`).join('');
+  $('#lawList').innerHTML=R.map(r=>{const L=LAWS[r.key];return `<li class="lc-${r.key} s-${r.st}"><div class="ll-h"><span class="li-ic">${ic(L.icon,'sm')}</span><b>${esc(L.short==='MDR'?'MDR vigilance':L.short)}</b>${ib('reg-'+r.key,L.name)}<span class="pill p-${r.st}">${PILL[r.st]}</span></div><p class="why">${esc(r.why)}</p>${active(r)?`<p class="to">${ic('send','sm')}<span>Report to <b>${esc(L.to)}</b>${r.key==='nis2'?'. '+NIS2CH:''}</span></p>`:''}</li>`}).join('');
+}
+function rowHtml(d){
+  const open=S.step===d.id,sent=S.done[d.id],skip=S.skip[d.id],miss=missing(d.id);
+  const right=sent?`<span class="stat ok">${ic('check','sm')}${RECORD.includes(d.id)?'Recorded':'Sent'} ${fmtLog(new Date(sent)).slice(5)}</span>`
+    :skip?`<span class="stat">${ic('x','sm')}Not needed</span>`
+    :d.at?`<span class="count" data-due="${d.at.getTime()}" data-id="${d.id}">--</span>`:(d.when?`<span class="when">${esc(d.when)}</span>`:'');
+  const sub=[d.at?'Due '+dueS(d):'',d.note].filter(Boolean).join(' · ');
+  return `<li class="trow${open?' open':''}" id="row_${d.id}"><button type="button" class="trow-h" id="rowbtn_${d.id}" data-step="${d.id}" aria-expanded="${open}"${open?` aria-controls="step_${d.id}"`:''}><span class="tl-main"><span class="tl-t">${lawTag(d.law)}<b>${esc(d.l)}</b></span>${sub?`<span class="tl-sub">${esc(sub)}</span>`:''}</span><span class="tl-side">${right}<span class="miss"${sent||skip||!miss?' hidden':''}>${miss} to fill in</span></span>${ic('chev','sm chev')}</button>${open?`<div class="tstep" id="step_${d.id}">${stepHtml(d)}</div>`:''}</li>`;
+}
+function ctlHtml(k){const x=FDEF(k),id='fill_'+k;
+  return x.type?`<input type="${x.type}" id="${id}" data-k="${k}" value="${esc(S[k]||'')}">`:`<textarea id="${id}" data-k="${k}" rows="2">${esc(S[k]||'')}</textarea>`}
+function ansHtml(a){const q=Q.find(x=>x.id===a);
+  return `<div class="seg" role="radiogroup" aria-label="${esc(q?q.q:a)}">${Object.entries(ANS).map(([x,l])=>`<label><input type="radio" id="fill_a_${a}_${x}" name="fill_a_${a}" data-a="${a}" value="${x}" ${S.a[a]===x?'checked':''}><span>${l}</span></label>`).join('')}</div>`}
+function stepStatus(id){const sent=S.done[id],skip=S.skip[id],miss=missing(id);
+  if(sent)return `${RECORD.includes(id)?'Recorded':'Sent'} ${fmtLog(new Date(sent))}. This is in the decision log.`;
+  if(skip)return `Marked as not needed: ${skip}. This is in the decision log.`;
+  if(NOSEND.includes(id))return 'When QA decides a device on the market may be affected, enter the time. The MDR deadline then starts from it.';
+  return miss?`${miss} required item${miss>1?'s':''} missing. Text in [brackets] still needs your input. You can send now and add details later.`:'All required content is there. Check the wording before sending.'}
+function stepHtml(d){
+  const T=TPL[d.id],L=LAWS[d.law],id=d.id,sent=S.done[id],skip=S.skip[id],rec=RECORD.includes(id),nosend=NOSEND.includes(id);
+  const dest=rec?'Internal record, you do not send it':nosend?'Internal decision, you do not send it':id==='gdpr-s'?'Send to <b>the people affected</b>':id==='gdpr-c'?'Send to <b>the controller (your customer)</b>':id==='nis2-c'?'Send to <b>the affected customers</b>':`Send to <b>${esc(L.to)}</b>${d.law==='nis2'?'. '+NIS2CH:''}`;
+  const due=d.at?'due '+dueS(d):(d.note||d.when||'');
+  const req=needOf(id).map(n=>{const ok=isDone(n),key=n.k||'a_'+n.a;let vline='',field='';
+    if(n.k==='crossb'&&v('cross')==='no'){vline='<span class="val">Not needed, no cross-border impact</span>'}
+    else if(n.k){field=`<div class="fill" id="wrap_${key}"${ok?' hidden':''}><label class="sr" for="fill_${n.k}">${esc(FDEF(n.k).l)}</label>${ctlHtml(n.k)}</div>`;
+      if(ok)vline=`<span class="val">${esc(FDEF(n.k).type==='datetime-local'?val(n.k).replace('T',' '):val(n.k))}</span><button type="button" class="linkbtn" data-edit="${key}">Edit</button>`}
+    else{field=`<div class="fill" id="wrap_${key}"${ok?' hidden':''}>${ansHtml(n.a)}</div>`;
+      if(ok)vline=`<span class="val">${ANS[v(n.a)]}</span><button type="button" class="linkbtn" data-edit="${key}">Change</button>`}
+    return `<li class="${ok?'ok':'miss'}" data-need="${n.k||'a:'+n.a}">${ic(ok?'check':'circle','sm st')}<div class="rq"><div class="rq-l"><span>${esc(n.l)}</span>${ib('ref:'+n.ref,n.l)}</div>${vline?`<div class="rq-v">${vline}</div>`:''}${field}</div></li>`}).join('');
+  const needK=new Set(needOf(id).filter(n=>n.k).map(n=>n.k));
+  const extra=tplKeys(id).filter(k=>!needK.has(k)&&k!=='name'&&k!=='org'),empty=extra.filter(k=>!val(k)).length;
+  const more=extra.length?`<details class="more"><summary>${ic('pen','sm')}Other details in this draft${empty?` (${empty} empty)`:''}</summary><div class="morebody">${extra.map(k=>`<div class="field"><label for="fill_${k}">${esc(FDEF(k).l)}</label>${ctlHtml(k)}</div>`).join('')}</div></details>`:'';
+  const ended=(id==='nis2-f'||id==='nis2-p')?`<div class="field datef"><div class="flab"><label for="fill_ended">Date incident handling ended</label>${ib('d-nis2-p','NIS2 progress report')}</div><input type="date" id="fill_ended" data-k="ended" value="${esc(S.ended||'')}"><p class="hint">Sets the final report date. Leave it empty while you are still handling the incident.</p></div>`:'';
+  const sentBox=sent?`<div class="sentbox"><div class="field"><label for="sent_at">${rec?'Recorded at':'Actual time sent'}</label><input type="datetime-local" id="sent_at" value="${toInput(new Date(sent))}"></div>${rec?'':`<div class="field"><label for="sent_ref">Reference or case number</label><input id="sent_ref" value="${esc(S.ref[id]||'')}" placeholder="For example the case number you got back"></div>`}</div>`:'';
+  const skipForm=d.opt&&!sent&&!skip?`<form class="skipform" id="skipForm" autocomplete="off" hidden><div class="field"><label for="skip_reason">Why is it not needed?</label><input id="skip_reason" placeholder="Short reason, for example: authority has not asked"></div><button type="submit" class="btn primary">Save</button><button type="button" class="btn" id="skipCancel">Cancel</button></form>`:'';
+  const acts=[`<button class="btn" id="copyDraft" type="button">${ic('copy','sm')}Copy draft</button>`];
+  if(skip)acts.push(`<button class="btn" id="undoSkip" type="button">${ic('reload','sm')}Undo not needed</button>`);
+  else{
+    if(d.opt&&!sent)acts.push(`<button class="btn" id="skipBtn" type="button">${ic('x','sm')}Not needed</button>`);
+    if(!nosend)acts.push(sent?`<button class="btn" id="markSent" type="button">${ic('reload','sm')}${rec?'Undo recorded':'Undo sent'}</button>`:`<button class="btn primary" id="markSent" type="button">${ic(rec?'check':'send','sm')}${rec?'Mark as recorded':'Mark as sent'}</button>`);
+  }
+  return `<div class="st-head"><h3>${esc(T.title)}</h3>${ib('d-'+id,L.short+' '+T.title)}</div>
+    <p class="st-to">${ic('send','sm')}<span>${dest}${due?' · '+esc(due):''}</span></p>
+    ${sentBox}
+    <div class="sgrid">
+      <div><div class="colh"><span class="eyebrow">What the law requires</span>${ib('sec_drafts','what a report must contain')}</div><ul class="req" id="req">${req}</ul>${ended}${more}</div>
+      <div><div class="colh"><span class="eyebrow">Draft</span></div><pre class="draft" id="draft">${esc(T.text())}</pre></div>
+    </div>
+    ${skipForm}
+    <div class="st-act"><span class="status" id="draftStatus" aria-live="polite">${esc(stepStatus(id))}</span><span class="actions">${acts.join('')}</span></div>`;
+}
+function renderReport(R){
+  renderLaws(R);
+  const list=steps(R),now=Date.now();lastSig=sig(R,now);
+  if(S.step&&!list.find(d=>d.id===S.step))S.step=null;
+  if(!list.length){$('#timeline').innerHTML='<p class="empty">No reports are needed for the current answers. Record the incident in your own incident register.</p>';return}
+  const by={};list.forEach(d=>{const b=band(d,now);(by[b]=by[b]||[]).push(d)});
+  $('#timeline').innerHTML=BANDS.filter(([k])=>by[k]).map(([k,l])=>{
+    const rows=by[k].sort(byTime).map(rowHtml).join('');
+    if(k==='sent')return `<details class="band b-sent" id="sentBand"${sentOpen||(S.step&&closed(S.step))?' open':''}><summary class="band-h">${ic('check','sm')}Done <span class="n">${by[k].length}</span>${ic('chev','sm chev')}</summary><ol class="tl">${rows}</ol></details>`;
+    return `<section class="band b-${k}" aria-label="${l}"><h4 class="band-h">${l} <span class="n">${by[k].length}</span></h4><ol class="tl">${rows}</ol></section>`}).join('');
+}
+function refreshStep(){
+  const id=S.step;if(!id||!$('#draft'))return;const T=TPL[id],need=needOf(id);
+  $('#draft').textContent=T.text();
+  document.querySelectorAll('#req>li[data-need]').forEach(li=>{const n=need.find(x=>(x.k||'a:'+x.a)===li.dataset.need);if(!n)return;const ok=isDone(n);
+    li.classList.toggle('ok',ok);li.classList.toggle('miss',!ok);li.querySelector('.st use').setAttribute('href','#i-'+(ok?'check':'circle'))});
+  $('#draftStatus').textContent=stepStatus(id);
+  const m=document.querySelector('#rowbtn_'+id+' .miss'),n=missing(id);if(m){m.textContent=n+' to fill in';m.hidden=!n||closed(id)}
+}
+function openStep(id){
+  S.reached=Math.max(S.reached,3);S.phase=3;S.step=id;if(closed(id))sentOpen=true;$('#reportMsg').textContent='';
+  if(view!=='incident')setView('incident');all();
+  const r=$('#row_'+id);if(r){r.scrollIntoView({block:'start'});$('#rowbtn_'+id).focus({preventScroll:true})}
+}
+function focusFirstRow(){const nx=document.querySelector('#timeline .trow-h');if(nx)nx.focus()}
+function toggleSent(id){
+  const lab=stepLab(id),rec=RECORD.includes(id);
+  if(S.done[id]){delete S.done[id];log(`${rec?'Unmarked as recorded':'Unmarked as sent'}: ${lab}`);all();$('#reportMsg').textContent=`${lab} is back on the to-do list.`;const b=$('#markSent');if(b)b.focus();return}
+  S.done[id]=new Date().toISOString();log(`${rec?'Recorded':'Sent'}: ${lab}`);all();
+  $('#reportMsg').textContent=`Marked as ${rec?'recorded':'sent'} and logged: ${lab}, ${fmtLog(new Date())}. Correct the time or add a reference below if needed.`;
+  const t=$('#sent_ref')||$('#sent_at');if(t)t.focus();
+}
+function setSentTime(id,value){
+  const d=new Date(value);if(!value||isNaN(d))return;
+  S.done[id]=d.toISOString();log(`${RECORD.includes(id)?'Recorded':'Sent'} time changed: ${stepLab(id)}: ${fmtLog(d)}`);all();
+}
+function setRef(id,value){
+  const x=value.trim();if((S.ref[id]||'')===x)return;
+  if(x)S.ref[id]=x;else delete S.ref[id];log(`Reference for ${stepLab(id)}: ${x||'(removed)'}`);all();
+}
+function skipStep(id,reason){
+  S.skip[id]=reason;log(`Not needed: ${stepLab(id)}. Reason: ${reason}`);S.step=null;all();
+  $('#reportMsg').textContent=`Marked as not needed and logged: ${stepLab(id)}.`;focusFirstRow();
+}
+function unskip(id){delete S.skip[id];log(`Undo not needed: ${stepLab(id)}`);all();$('#reportMsg').textContent=`${stepLab(id)} is back on the to-do list.`}
+
+/* ---------- 4 Close ---------- */
+const FIRST=['nis2-ew','nis2-n','gdpr-a','gdpr-c','gdpr-s','mdr-r','cra-ew','cra-n'];
+function renderClose(R){
+  const list=steps(R);
+  [['#c_ended','ended'],['#c_fixdate','fixdate']].forEach(([s,k])=>{const el=$(s);if(el!==document.activeElement)el.value=S[k]||''});
+  $('#fixBlock').hidden=!list.some(d=>d.id==='cra-fv');
+  const rest=list.filter(d=>!closed(d.id)),early=rest.filter(d=>FIRST.includes(d.id)).sort(byTime);
+  const open=rest.filter(d=>!FIRST.includes(d.id)).sort(byTime);
+  $('#closeOpen').innerHTML=(early.length?`<li><button type="button" class="linkrow" data-goto-step="${early[0].id}">${ic('alert','sm')}<span>${early.length} first report${early.length>1?'s are':' is'} not done yet</span><span class="when">Open in Report</span></button></li>`:'')
+    +(open.length?open.map(d=>`<li><button type="button" class="linkrow" data-goto-step="${d.id}">${lawTag(d.law)}<span>${esc(d.l)}</span><span class="when">${d.at?dueS(d):esc(d.when||'Without delay')}</span></button></li>`).join('')
+    :`<li class="empty">${ic('check','sm')}All final reports and records are done.</li>`);
+  renderComp(R);renderLog();renderArch();
+}
+
+/* ---------- Compliance summary ---------- */
+const dur=ms=>{const h=Math.round(ms/H);return h>=48?Math.round(h/24)+' days':Math.max(h,1)+' h'};
+function duties(R){
+  const now=Date.now(),rows=[];
+  R.forEach(r=>{
+    if(!(active(r)||r.st==='record')){rows.push({law:r.key,duty:'No reporting duty',cite:'',due:'',done:'',res:'nr',txt:PILL[r.st],why:r.why});return}
+    r.dl.filter(d=>TPL[d.id]).forEach(d=>{
+      const h=HELP['d-'+d.id],ref=h&&h.r&&REF[h.r[0]],sent=S.done[d.id]?new Date(S.done[d.id]):null,skip=S.skip[d.id];
+      let res,txt;
+      if(skip){res='nr';txt='Not needed'}
+      else if(sent){if(d.at&&sent>d.at){res='late';txt='Late by '+dur(sent-d.at)}else{res='ok';txt=d.at?'On time':(RECORD.includes(d.id)?'Recorded':'Done')}}
+      else if(d.at&&now>d.at){res='over';txt='Overdue'}
+      else{res='open';txt='Open'}
+      rows.push({law:r.key,duty:TPL[d.id].title,cite:ref?ref.cite:'',due:d.at?dueS(d):(d.when||''),done:sent?fmtLog(sent)+(S.ref[d.id]?', ref '+S.ref[d.id]:''):'',res,txt,why:skip?'Reason: '+skip:''});
+    });
+  });
+  return rows;
+}
+const RCLS={ok:'r-ok',late:'r-late',over:'r-late',open:'r-open',nr:'r-nr'};
+function renderComp(R){
+  const rows=duties(R),c=k=>rows.filter(x=>x.res===k).length;
+  $('#compHead').innerHTML=`<span><b>${c('ok')}</b> met</span><span><b>${c('late')+c('over')}</b> late or overdue</span><span><b>${c('open')}</b> open</span><span><b>${c('nr')}</b> not required, with reason</span><span><b>${S.log.length}</b> log entries</span>`;
+  $('#compBody').innerHTML=rows.map(x=>`<tr><td>${lawTag(x.law)}</td><td><b>${esc(x.duty)}</b>${x.cite?`<span class="cite">${esc(x.cite)}</span>`:''}${x.why?`<span class="why">${esc(x.why)}</span>`:''}</td><td>${esc(x.due)}</td><td>${esc(x.done)}</td><td><span class="rpill ${RCLS[x.res]}">${esc(x.txt)}</span></td></tr>`).join('');
+  [['#c_owner','owner'],['#c_signer','signName']].forEach(([s,k])=>{const el=$(s);if(el!==document.activeElement)el.value=S[k]||''});
+  const signed=!!S.signAt,b=$('#signBtn');
+  b.querySelector('span').textContent=signed?'Undo sign-off':'Sign off';b.classList.toggle('primary',!signed);
+  $('#signStatus').textContent=signed?`Signed off by ${S.signName} on ${fmtLog(new Date(S.signAt))}.`:(c('open')+c('over')?'You can sign off now or when the open duties are done. Sign-off is logged.':'All duties are closed. Ready for management sign-off.');
+}
+function compText(R){
+  const rows=duties(R),aw=new Date(S.aware);
+  return [`Compliance summary: ${S.name||'[incident]'}`,`Organisation: ${S.org||'[organisation]'}`,`Became aware: ${isNaN(aw)?'':fmtLog(aw)}`,`Incident owner: ${S.owner||'[not set]'}`,`Management sign-off: ${S.signAt?S.signName+', '+fmtLog(new Date(S.signAt)):'not signed'}`,'',
+    ...rows.map(x=>`${LAWS[x.law].short} | ${x.duty}${x.cite?' ('+x.cite+')':''} | due: ${x.due||'-'} | done: ${x.done||'-'} | ${x.txt}${x.why?' | '+x.why:''}`),
+    '',`Decision log: ${S.log.length} entries (see the log for every answer and decision with time).`,'Generated by Incident Clock (demo). Legal texts: EUR-Lex and Finlex, 2026-10-16.'].join('\n');
+}
+function renderLog(){
+  const items=[...S.log].reverse();
+  $('#log').innerHTML=items.length?items.map(e=>`<li><time>${fmtLog(new Date(e.t))}</time><span>${esc(e.x)}</span></li>`).join(''):'<li>No entries yet.</li>';
+}
+function renderArch(){
+  $('#archBlock').hidden=!ARCH.length;
+  $('#archList').innerHTML=ARCH.map((e,i)=>{const d=e.data||{},aw=new Date(d.aware);return `<li class="arow"><span class="aname">${esc(d.name||'Unnamed incident')}</span><span class="when">${isNaN(aw)?'':'aware '+esc(fmt(aw))}</span><button type="button" class="btn" data-arch="${i}" aria-label="Open ${esc(d.name||'unnamed incident')}">Open</button></li>`}).join('');
+}
+
+/* ---------- Clocks ---------- */
+function left(ms){
+  const neg=ms<0,a=Math.abs(ms);let s;
+  if(a>=48*H){const d=Math.floor(a/DAY),h=Math.floor(a%DAY/H);s=`${d} d ${h} h`}
+  else{const h=Math.floor(a/H),m=Math.floor(a%H/60e3),sec=Math.floor(a%60e3/1e3);s=`${pad(h)}:${pad(m)}:${pad(sec)}`}
+  return neg?`${s} overdue`:s;
+}
+function tick(){
+  const now=Date.now();
+  document.querySelectorAll('[data-due]').forEach(el=>{
+    const ms=+el.dataset.due-now,id=el.dataset.id,done=id&&closed(id);
+    el.dataset.st=done?'ok':ms<6*H?'crit':ms<24*H?'warn':'idle';
+    el.textContent=done?'Done':left(ms);
+  });
+  if(sig(evaluate(),now)!==lastSig){const a=document.activeElement;if(!(a&&a.closest&&a.closest('#timeline')&&/^(TEXTAREA|INPUT)$/.test(a.tagName)&&a.type!=='radio'))all()}
+}
+
+/* ---------- Legal quote rendering ---------- */
+function quote(k){
+  const r=REF[k],L=LAWS[r.law];
+  let body=esc(r.text);
+  if(r.hl){const h=esc(r.hl);const i=body.indexOf(h);if(i>=0)body=body.slice(0,i)+'<mark>'+h+'</mark>'+body.slice(i+h.length)}
+  const url=r.a?`${L.url}#${r.a}`:L.url;
+  return `<figure class="ref lc-${r.law}"><figcaption class="refcap"><span class="lawtag">${esc(L.short)}</span><b>${esc(r.cite)}</b><span class="lid">${esc(L.id)}</span></figcaption><blockquote class="legal" ${r.lang?`lang="${r.lang}"`:''}>${body}</blockquote>${r.en?`<p class="trans"><b>In English (unofficial):</b> ${esc(r.en)}</p>`:''}<a class="src" href="${url}" target="_blank" rel="noopener">${ic('ext','sm')}Open in ${r.law==='fi'?'Finlex':'EUR-Lex'}</a></figure>`;
+}
+
+/* ---------- Drawer ---------- */
+let lastFocus=null;
+function openHelp(k){
+  let h=HELP[k];
+  if(!h&&k.startsWith('ref:')&&REF[k.slice(4)]){const r=REF[k.slice(4)];h={t:r.use,icon:'scale',p:'This is what the law says the report must contain for this item.',r:[k.slice(4)]}}
+  if(!h)return;
+  lastFocus=document.activeElement;
+  $('#dIcon').innerHTML=ic(h.icon);$('#dTitle').textContent=h.t;
+  $('#dBody').innerHTML=`<div><div class="plainlab eyebrow">${ic('help','sm')}In plain words</div><p class="plain">${esc(h.p)}</p></div><div class="plainlab eyebrow" style="margin-bottom:-8px">${ic('scale','sm')}The law says</div>${h.r.map(quote).join('')}`;
+  $('#shade').hidden=false;$('#drawer').hidden=false;$('#dBody').scrollTop=0;$('#dClose').focus();
+}
+function closeHelp(){$('#shade').hidden=true;$('#drawer').hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+
+/* ---------- Rulebook ---------- */
+const SOON=[
+ {icon:'chip',t:'AI Act (EU) 2024/1689, Art. 73',d:'Serious incident reports for high-risk AI systems. For AI that is part of a medical device, the high-risk rules start later than for other AI (2027-08-02 in the original text), and the dates are under review in the Commission’s Digital Omnibus proposal. Check before relying on a date.',url:EUR('32024R1689')},
+ {icon:'shield',t:'Commission Implementing Regulation (EU) 2024/2690',d:'Detailed "significant incident" criteria under NIS2, but only for digital infrastructure and digital service providers. Not for medical device manufacturers.',url:EUR('32024R2690')},
+ {icon:'person',t:'EDPB Guidelines 9/2022 on personal data breach notification',d:'How authorities read GDPR Art. 33 and 34, with worked examples such as ransomware. Guidance, not law.',url:'https://www.edpb.europa.eu/our-work-tools/general-guidance/guidelines-recommendations-best-practices_en'},
+ {icon:'pulse',t:'MDCG guidance on vigilance terms (MDCG 2023-3)',d:'Questions and answers on MDR vigilance terms and timelines. Guidance, not law.',url:'https://health.ec.europa.eu/medical-devices-sector/new-regulations/guidance-mdcg-endorsed-documents-and-other-guidance_en'}
+];
+function renderRules(){
+  const R=evaluate();const st={};R.forEach(r=>st[r.key]=r.st);st.fi=st.nis2;
+  const order=['nis2','fi','gdpr','mdr','cra'];
+  const used={};Object.entries(REF).forEach(([k,r])=>{(used[r.law]=used[r.law]||[]).push(k)});
+  const shown=order.filter(k=>flt==='all'||(st[k]==='applies'||st[k]==='assess'));
+  $('#laws').innerHTML=shown.length?shown.map(k=>{
+    const L=LAWS[k],s=st[k];
+    return `<article class="lawcard lc-${k}"><div class="meta"><div class="rt"><div class="lawicon">${ic(L.icon)}</div><div><h3>${esc(L.name)}</h3><p class="law">${esc(L.id)}</p></div></div><p class="full">${esc(L.full)}</p><div><span class="pill p-${s}">${k==='fi'?'With NIS2: ':''}${PILL[s]}</span></div><dl class="facts-list">${L.facts.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join('')}${L.to?`<dt>Report to</dt><dd>${esc(L.to)}${k==='nis2'?'. '+NIS2CH:''}</dd>`:''}</dl><a class="src" href="${L.url}" target="_blank" rel="noopener">${ic('ext','sm')}Full text</a></div><div class="arts"><div class="eyebrow">Articles this tool uses</div>${used[k].map(rk=>{const r=REF[rk];return `<details><summary><span class="cite">${esc(r.cite)}</span><span class="used">${esc(r.use)}</span></summary><div class="body">${quote(rk)}</div></details>`}).join('')}</div></article>`;
+  }).join(''):`<p class="sub">No law applies to the current answers.</p>`;
+  $('#soon').innerHTML=SOON.map(x=>`<li>${ic(x.icon)}<div><b>${esc(x.t)}</b><br>${esc(x.d)} <a href="${x.url}" target="_blank" rel="noopener">Source</a></div></li>`).join('');
+}
+
+function setView(vw){
+  view=vw;$('#viewIncident').hidden=vw!=='incident';$('#viewRules').hidden=vw!=='rulebook';
+  $('#navIncident').setAttribute('aria-selected',vw==='incident');$('#navRules').setAttribute('aria-selected',vw==='rulebook');
+  if(vw==='rulebook')renderRules();
+}
+function all(){
+  const a=document.activeElement,fid=a&&a!==document.body&&a.id?a.id:null;
+  const R=evaluate();
+  renderBar(R);renderStart();renderTriage();renderReport(R);renderClose(R);renderPhases(R);
+  if(view==='rulebook')renderRules();
+  save();tick();
+  if(fid){const el=document.getElementById(fid);
+    if(el){const w=el.closest('.fill[hidden]');if(w){w.hidden=false;const rv=w.parentElement.querySelector('.rq-v');if(rv)rv.hidden=true}}
+    if(el&&el!==document.activeElement&&!el.closest('[hidden]'))el.focus({preventScroll:true})}
+}
+
+function copy(text,el,status){
+  const ok=()=>{status.textContent='Copied.'};
+  const fail=()=>{el.hidden=false;const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);status.textContent='Selected. Press Ctrl+C to copy.'};
+  try{navigator.clipboard.writeText(text).then(ok,fail)}catch(e){fail()}
+}
+
+/* Replacing the incident: confirm in the page, keep the old one in the archive first. */
+let pendingAct=null;
+function askReplace(act){
+  $('#menu').open=false;
+  if(S.example){act();return}
+  pendingAct=act;$('#confirmBar').hidden=false;window.scrollTo(0,0);$('#cfNo').focus();
+}
+function freshView(){sentOpen=false;$('#reportMsg').textContent='';setView('incident');renderStart(true);all();window.scrollTo(0,0)}
+function loadExample(){S=example();freshView()}
+function newIncident(){S=blank();freshView();$('#f_name').focus()}
+
+/* ---------- Events ---------- */
+const TIMED={aware:'Awareness time',fixdate:'Fix or mitigation date',ended:'Handling ended date',mdrAware:'MDR awareness time'};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-help]');if(b){e.preventDefault();openHelp(b.dataset.help)}
+  if(!e.target.closest('#menu'))$('#menu').open=false});
+$('#dClose').addEventListener('click',closeHelp);
+$('#shade').addEventListener('click',closeHelp);
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('#drawer').hidden)closeHelp();else if($('#menu').open){$('#menu').open=false;$('#menu summary').focus()}});
+$('#dRules').addEventListener('click',()=>{closeHelp();setView('rulebook');window.scrollTo(0,0)});
+document.querySelector('.nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)setView(b.dataset.view)});
+document.querySelector('.filter').addEventListener('click',e=>{const b=e.target.closest('[data-flt]');if(!b)return;flt=b.dataset.flt;document.querySelectorAll('.filter button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderRules()});
+
+$('#barNext').addEventListener('click',()=>{const id=$('#barNext').dataset.open;if(id)openStep(id)});
+$('#phases').addEventListener('click',e=>{const b=e.target.closest('.ph-btn');if(!b)return;const p=+b.dataset.p;if(!unlocked(p)||S.phase===p)return;openPhase(p)});
+
+/* 1 Start */
+$('#startForm').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;S[k]=e.target.value;edited();
+  if(k==='aware')all();else{if(k==='name'||k==='org')renderBar(evaluate()),tick();save()}});
+$('#startForm').addEventListener('change',e=>{if(e.target.dataset.k==='aware'){log(`${TIMED.aware} set to ${e.target.value.replace('T',' ')||'(empty)'}`);all()}});
+$('#startForm').addEventListener('submit',e=>{e.preventDefault();startNext()});
+
+/* 2 Triage */
+$('#triage').addEventListener('change',e=>{
+  const k=e.target.dataset.k;
+  if(k){S[k]=e.target.value;log(`${TIMED[k]} set to ${e.target.value.replace('T',' ')||'(empty)'}`);edited();all();return}
+  const id=e.target.name;if(!id)return;S.a[id]=e.target.value;const q=Q.find(x=>x.id===id);
+  const label=q.type==='select'?(SEV.find(s=>s[0]===e.target.value)||[])[1]:ANS[e.target.value];
+  log(`${q.k}: ${label}`);edited();all();
+});
+$('#triage').addEventListener('click',e=>{const b=e.target.closest('[data-tgo],[data-tg],[data-done]');if(!b)return;
+  if(b.dataset.done){S.reached=Math.max(S.reached,3);openPhase(3);return}
+  goGroup(b.dataset.tgo||b.dataset.tg)});
+
+/* 3 Report */
+$('#timeline').addEventListener('click',e=>{
+  const ed=e.target.closest('[data-edit]');
+  if(ed){const w=document.getElementById('wrap_'+ed.dataset.edit);if(w){w.hidden=false;const rv=ed.closest('.rq-v');if(rv)rv.hidden=true;const c=w.querySelector('textarea,input:checked,input');if(c)c.focus()}return}
+  if(e.target.closest('#markSent')){if(S.step)toggleSent(S.step);return}
+  if(e.target.closest('#copyDraft')){if(S.step)copy(TPL[S.step].text(),$('#draft'),$('#draftStatus'));return}
+  if(e.target.closest('#skipBtn')){const f=$('#skipForm');f.hidden=false;$('#skipBtn').hidden=true;$('#skip_reason').focus();return}
+  if(e.target.closest('#skipCancel')){$('#skipForm').hidden=true;$('#skipBtn').hidden=false;$('#skipBtn').focus();return}
+  if(e.target.closest('#undoSkip')){if(S.step)unskip(S.step);return}
+  const b=e.target.closest('.trow-h');if(!b)return;
+  const id=b.dataset.step;S.step=S.step===id?null:id;$('#reportMsg').textContent='';all();
+  if(S.step){const r=$('#row_'+id);if(r&&r.getBoundingClientRect().top<70)r.scrollIntoView({block:'start'})}
+});
+$('#timeline').addEventListener('submit',e=>{if(e.target.id!=='skipForm')return;e.preventDefault();
+  const x=$('#skip_reason').value.trim();if(!x){$('#draftStatus').textContent='Write a short reason first. It goes in the decision log.';$('#skip_reason').focus();return}
+  skipStep(S.step,x)});
+$('#timeline').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;S[k]=e.target.value;edited();if(!TIMED[k])refreshStep();save()});
+$('#timeline').addEventListener('change',e=>{const t=e.target;
+  if(t.dataset.k&&TIMED[t.dataset.k]){log(`${TIMED[t.dataset.k]} set to ${t.value.replace('T',' ')||'(empty)'}`);all();return}
+  if(t.dataset.a){const id=t.dataset.a;S.a[id]=t.value;const q=Q.find(x=>x.id===id);log(`${q.k}: ${ANS[t.value]}`);edited();all()}});
+/* Actual sent time and reference: saved when the field is left or Enter is pressed. */
+const commitSent=t=>{if(!S.step||!S.done[S.step])return;if(t.id==='sent_at'&&t.value!==toInput(new Date(S.done[S.step])))setSentTime(S.step,t.value);if(t.id==='sent_ref')setRef(S.step,t.value)};
+$('#timeline').addEventListener('focusout',e=>{if(e.target.id==='sent_at'||e.target.id==='sent_ref')commitSent(e.target)});
+$('#timeline').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='sent_at'||e.target.id==='sent_ref')){e.preventDefault();commitSent(e.target)}});
+$('#timeline').addEventListener('toggle',e=>{if(e.target.id==='sentBand')sentOpen=e.target.open},true);
+$('#toClose').addEventListener('click',()=>openPhase(4));
+
+/* 4 Close */
+[['#c_owner','owner','Incident owner'],['#c_signer','signName','Sign-off name']].forEach(([s,k,lab])=>{const el=$(s);
+  el.addEventListener('input',()=>{S[k]=el.value;edited();save()});
+  el.addEventListener('change',()=>{log(`${lab}: ${el.value.trim()||'(empty)'}`);all()})});
+$('#signBtn').addEventListener('click',()=>{
+  if(S.signAt){log(`Management sign-off withdrawn (was ${S.signName})`);S.signAt=null;all();return}
+  const n=($('#c_signer').value||'').trim();
+  if(!n){$('#signStatus').textContent='Enter the name and role of the person signing off first.';$('#c_signer').focus();return}
+  S.signName=n;S.signAt=new Date().toISOString();edited();log(`Management sign-off by ${n}`);all();
+});
+$('#copyComp').addEventListener('click',()=>{const t=compText(evaluate()),out=$('#compOut');
+  const fail=()=>{out.hidden=false;out.textContent=t;const r=document.createRange();r.selectNodeContents(out);const s=getSelection();s.removeAllRanges();s.addRange(r);$('#compStatus').textContent='Selected. Press Ctrl+C to copy.'};
+  try{navigator.clipboard.writeText(t).then(()=>{$('#compStatus').textContent='Summary copied.'},fail)}catch(e){fail()}});
+['#c_ended','#c_fixdate'].forEach(s=>{const el=$(s),k=el.dataset.k;
+  el.addEventListener('input',()=>{S[k]=el.value;edited();save()});
+  el.addEventListener('change',()=>{log(`${TIMED[k]} set to ${el.value||'(empty)'}`);all()})});
+$('#closeOpen').addEventListener('click',e=>{const b=e.target.closest('[data-goto-step]');if(b)openStep(b.dataset.gotoStep)});
+$('#noteForm').addEventListener('submit',e=>{e.preventDefault();const x=$('#logNote').value.trim();if(!x)return;log(x);$('#logNote').value='';edited();all();$('#logStatus').textContent='Note added.'});
+$('#copyLog').addEventListener('click',()=>{const txt=S.log.map(e=>`${fmtLog(new Date(e.t))}  ${e.x}`).join('\n');copy(txt,$('#log'),$('#logStatus'))});
+$('#copyJson').addEventListener('click',()=>{const txt=JSON.stringify(S,null,2);$('#jsonOut').textContent=txt;copy(txt,$('#jsonOut'),$('#jsonStatus'))});
+$('#archList').addEventListener('click',e=>{const b=e.target.closest('[data-arch]');if(!b)return;const ent=ARCH[+b.dataset.arch];if(!ent)return;
+  askReplace(()=>{const d=migrate(JSON.parse(JSON.stringify(ent.data)));ARCH=ARCH.filter(x=>x!==ent);saveArch();if(!d)return;S=d;log('Incident reopened from Earlier incidents');freshView()})});
+
+/* Menu and replace confirmation */
+$('#btnExample').addEventListener('click',()=>askReplace(loadExample));
+$('#btnNew').addEventListener('click',()=>askReplace(newIncident));
+$('#cfYes').addEventListener('click',()=>{const act=pendingAct;pendingAct=null;$('#confirmBar').hidden=true;archive(S);if(act)act()});
+$('#cfNo').addEventListener('click',()=>{pendingAct=null;$('#confirmBar').hidden=true;$('#menu summary').focus()});
+
+renderStart(true);all();
+if(location.hash==='#rulebook')setView('rulebook');
+setInterval(tick,1000);
+})();
+</script>
+
+</html>
