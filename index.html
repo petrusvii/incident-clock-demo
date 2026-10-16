@@ -197,7 +197,7 @@ details.band>summary::-webkit-details-marker{display:none}
 details.band[open]>summary .chev{transform:rotate(180deg)}
 .tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .trow{border-radius:10px;background:var(--bg);border-left:3px solid transparent;scroll-margin-top:84px}
-.b-over .trow{border-left-color:var(--crit)}.b-d1 .trow,.b-asap .trow{border-left-color:var(--warn)}
+.trow.over{border-left-color:var(--crit)}
 .trow-h{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto 16px;gap:4px 12px;align-items:center;padding:10px 12px;border:0;background:transparent;text-align:left;border-radius:8px}
 .trow-h:hover{background:var(--sunk)}
 .trow.open .trow-h{border-bottom-left-radius:0;border-bottom-right-radius:0}
@@ -400,6 +400,45 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
 .fp{font-family:var(--mono);font-size:12px;word-break:break-all;color:var(--fg)}
 .lc-int{--lc:var(--muted)}
 .edited{font-size:12px;color:var(--warn)}
+/* report: progress and checkpoints */
+.rprog{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:10px;background:var(--bg)}
+.rp-top{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+.rp-top b{font-size:15px}
+.rp-bar{display:flex;gap:3px}
+.rp-seg{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.rp-seg.ok{background:var(--ok)}
+.rp-seg.over{background:var(--crit)}
+.rp-seg.cur{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.rprog .hint{max-width:70ch}
+.rp-split{font-size:13px;color:var(--fg)}
+#timeline{gap:0}
+.ms{position:relative;padding-left:30px}
+.ms::before{content:"";position:absolute;left:9px;top:30px;bottom:0;width:2px;background:var(--line)}
+.ms:last-child::before{display:none}
+.ms-done::before{background:color-mix(in srgb,var(--ok) 45%,var(--line))}
+.ms-h{list-style:none;cursor:pointer;display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap;padding:10px 6px;border-radius:8px;position:relative;min-height:44px}
+.ms-h::-webkit-details-marker{display:none}
+.ms-h:hover{background:var(--sunk)}
+.ms-dot{position:absolute;left:-30px;top:12px;width:20px;height:20px;border-radius:50%;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--surface)}
+.ms-dot .i{width:12px;height:12px;stroke-width:3}
+.ms-done .ms-dot{background:var(--ok);border-color:var(--ok)}
+.ms-cur .ms-dot{border-color:var(--accent);box-shadow:inset 0 0 0 3px var(--surface);background:var(--accent)}
+.ms-might .ms-dot{border-style:dashed}
+.ms-t{font-weight:600;font-size:14.5px}
+.ms-cur .ms-t{color:var(--accent)}
+.ms-done .ms-t,.ms-might .ms-t{color:var(--muted)}
+.ms-s{font-size:12.5px;color:var(--muted);margin-left:auto}
+.ms-s .over{color:var(--crit);font-weight:600}
+.ms-h .chev{flex:none}
+.ms[open]>.ms-h .chev{transform:rotate(180deg)}
+.ms>.tl{padding:2px 0 14px}
+.trow.done{background:transparent}
+.trow.done .trow-h{padding-block:6px}
+.trow.done .tl-sub{display:none}
+.trow.done .tl-t b{color:var(--muted);font-weight:500}
+.trow.done.open{background:var(--bg)}
+.trow.might:not(.done){background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+@media (max-width:520px){.ms-s{margin-left:0;flex-basis:100%;order:2}.ms-h .chev{order:1;margin-left:auto}.ms{padding-left:26px}.ms-dot{left:-26px}.ms::before{left:7px}}
 @media (prefers-reduced-motion:no-preference){
   .drawer{animation:slide .18s ease-out}
   @keyframes slide{from{transform:translateX(24px)}to{transform:none}}
@@ -530,6 +569,7 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
       <li class="phase" id="ph3">
         <button type="button" class="ph-btn" id="phb3" data-p="3" aria-controls="phbody3"><span class="num" id="phn3">3</span><span class="ph-txt"><span class="ph-title">Report</span><span class="ph-sum" id="phs3"></span></span><span class="ph-act" id="pha3"></span></button>
         <div class="ph-body" id="phbody3" hidden>
+          <div class="rprog" id="rprog"></div>
           <details class="lawsum" id="lawWrap"><summary><span class="eyebrow">Which laws apply</span><span class="lawpills" id="lawSum"></span><svg class="i sm chev" aria-hidden="true"><use href="#i-chev"/></svg></summary><ul class="lawlist" id="lawList"></ul></details>
           <p class="status" id="reportMsg" aria-live="polite"></p>
           <div id="timeline"></div>
@@ -1186,7 +1226,7 @@ const PILL={applies:'Report',assess:'Assess',record:'Record only',none:'Not trig
 const active=r=>r.st==='applies'||r.st==='assess';
 
 /* ---------- Flow helpers ---------- */
-const PH=[null,'What happened and when you became aware','Which laws apply','Every report, in time order','Final reports and the decision log'];
+const PH=[null,'What happened and when you became aware','Which laws apply','Your reports, checkpoint by checkpoint','Final reports and the decision log'];
 const unlocked=p=>p===1||(p===2&&S.reached>=2)||(p>=3&&S.reached>=3);
 const GROUPS=[];Q.forEach(q=>{if(q.g)GROUPS.push({...q,qs:[]});else GROUPS[GROUPS.length-1].qs.push(q)});
 const shownQ=q=>(!q.dep||S.a[q.dep]!=='no')&&(!q.dep2||S.a[q.dep2]!=='no');
@@ -1236,17 +1276,17 @@ function renderBar(R){
 
 /* ---------- Phases ---------- */
 function renderPhases(R){
-  const list=steps(R),done=list.filter(d=>closed(d.id)).length,p=pending(R),open=list.length-done;
+  const list=steps(R),must=list.filter(isMust),done=must.filter(d=>closed(d.id)).length,p=pending(R),open=list.length-list.filter(d=>closed(d.id)).length;
   const ts=triageStats(),rep=R.filter(r=>r.st==='applies').map(r=>LAWS[r.key].short),as=R.filter(r=>r.st==='assess').map(r=>LAWS[r.key].short);
   const aw=new Date(S.aware);
   const sum={
     1:[val('name')||'No name yet',val('org'),isNaN(aw)?'':'aware '+fmt(aw)].filter(Boolean).join(' · '),
     2:[`${ts.ans} of ${ts.n} answered`+(ts.uns?`, ${ts.uns} unsure`:''),missingWhy().length?missingWhy().length+' reason'+(missingWhy().length>1?'s':'')+' missing':'',rep.length?'Report: '+rep.join(', '):'',as.length?'Assess: '+as.join(', '):''].filter(Boolean).join(' · '),
-    3:list.length?`${done} of ${list.length} done`+(p.length?` · next: ${LAWS[p[0].law].short} ${p[0].l}, ${dueS(p[0])}`:''):'No reports needed',
+    3:list.length?`${done} of ${must.length} required done`+(p.length?` · next: ${LAWS[p[0].law].short} ${p[0].l}, ${dueS(p[0])}`:''):'No reports needed',
     4:`${open} still open · ${S.log.length} log entries`};
   for(let i=1;i<=4;i++){
     const li=$('#ph'+i),btn=$('#phb'+i),cur=S.phase===i,lock=!unlocked(i);
-    const ok=!cur&&!lock&&(i<=2?S.reached>i:i===3?(list.length>0&&!open):false);
+    const ok=!cur&&!lock&&(i<=2?S.reached>i:i===3?(must.length>0&&done===must.length):false);
     li.className='phase'+(cur?' cur':'')+(lock?' locked':'')+(ok?' done':'');
     btn.setAttribute('aria-expanded',cur);
     if(lock)btn.setAttribute('aria-disabled','true');else btn.removeAttribute('aria-disabled');
@@ -1324,7 +1364,8 @@ function rowHtml(d){
     :skip?`<span class="stat">${ic('x','sm')}Not needed</span>`
     :d.at?`<span class="count" data-due="${d.at.getTime()}" data-id="${d.id}">--</span>`:(d.when?`<span class="when">${esc(d.when)}</span>`:'');
   const sub=[d.at?'Due '+dueS(d):'',d.note].filter(Boolean).join(' · ');
-  return `<li class="trow${open?' open':''}" id="row_${d.id}"><button type="button" class="trow-h" id="rowbtn_${d.id}" data-step="${d.id}" aria-expanded="${open}"${open?` aria-controls="step_${d.id}"`:''}><span class="tl-main"><span class="tl-t">${lawTag(d.law)}<b>${esc(d.l)}</b></span>${sub?`<span class="tl-sub">${esc(sub)}</span>`:''}</span><span class="tl-side">${right}<span class="miss"${sent||skip||!miss?' hidden':''}>${miss} to fill in</span></span>${ic('chev','sm chev')}</button>${open?`<div class="tstep" id="step_${d.id}">${stepHtml(d)}</div>`:''}</li>`;
+  const cls=(open?' open':'')+(sent||skip?' done':'')+(!sent&&!skip&&d.at&&d.at<Date.now()?' over':'')+(MIGHT.includes(d.id)?' might':'');
+  return `<li class="trow${cls}" id="row_${d.id}"><button type="button" class="trow-h" id="rowbtn_${d.id}" data-step="${d.id}" aria-expanded="${open}"${open?` aria-controls="step_${d.id}"`:''}><span class="tl-main"><span class="tl-t">${lawTag(d.law)}<b>${esc(d.l)}</b></span>${sub?`<span class="tl-sub">${esc(sub)}</span>`:''}</span><span class="tl-side">${right}<span class="miss"${sent||skip||!miss?' hidden':''}>${miss} to fill in</span></span>${ic('chev','sm chev')}</button>${open?`<div class="tstep" id="step_${d.id}">${stepHtml(d)}</div>`:''}</li>`;
 }
 function ctlHtml(k){const x=FDEF(k),id='fill_'+k;
   return x.type?`<input type="${x.type}" id="${id}" data-k="${k}" value="${esc(S[k]||'')}">`:`<textarea id="${id}" data-k="${k}" rows="2">${esc(S[k]||'')}</textarea>`}
@@ -1374,16 +1415,52 @@ function stepHtml(d){
     ${skipForm}
     <div class="st-act"><span class="status" id="draftStatus" aria-live="polite">${esc(stepStatus(id))}</span><span class="actions">${acts.join('')}</span></div>`;
 }
+/* The Report phase is a short journey of legal checkpoints in a fixed order. A step keeps its place when it is done (ticked and quieter),
+   so the list never jumps. Only the checkpoint you are in, anything overdue or due within 24 hours, and "without delay" duties start open;
+   later checkpoints are one tap away with a calm summary. Steps that only apply in some situations are kept apart under "Might apply". */
+const MIGHT=['nis2-i','nis2-t','gdpr-f','mdr-fsca'];
+const MS=[['d1','First 24 hours'],['asap','Without delay'],['d3','Within 72 hours'],['wk','Within 2 weeks'],['mo','Within about a month'],['open','No fixed date'],['might','Might apply']];
+const MSID={'nis2-ew':'d1','cra-ew':'d1','nis2-n':'d3','gdpr-a':'d3','cra-n':'d3','nis2-p':'mo','cra-fi':'mo'};
+function msOf(d){
+  if(MIGHT.includes(d.id))return 'might';
+  if(!d.at)return d.asap||!d.when?'asap':'open';
+  if(MSID[d.id])return MSID[d.id];
+  if(d.id==='mdr-r')return ['serious','death'].includes(S.a.severity)?'wk':'d3';
+  if(d.id==='cra-fv')return 'wk';
+  return 'mo';
+}
+const isMust=d=>!MIGHT.includes(d.id);
+let msOpen={};
+function renderProgress(list,now){
+  const must=list.filter(isMust),done=must.filter(d=>closed(d.id)).length,might=list.length-must.length;
+  const order=MS.map(m=>m[0]),segs=must.slice().sort((a,b)=>order.indexOf(msOf(a))-order.indexOf(msOf(b))||byTime(a,b));
+  const nextOpen=segs.find(d=>!closed(d.id));
+  const left=must.filter(d=>!closed(d.id)),nowN=left.filter(d=>["d1","asap"].includes(msOf(d))).length,d3N=left.filter(d=>msOf(d)==="d3").length,laterN=left.length-nowN-d3N;
+  const split=left.length?[nowN?`Now: ${nowN}`:"",d3N?`Within 72 hours: ${d3N}`:"",laterN?`Later: ${laterN}`:""].filter(Boolean).join(" · "):"";
+  $("#rprog").innerHTML=`<div class="rp-top"><b>${done} of ${must.length} required done</b>${might?`<span class="hint">${might} more might apply</span>`:''}</div>${split?`<div class="rp-split">${split}</div>`:''}
+    <div class="rp-bar" aria-hidden="true">${segs.map(d=>{const c=closed(d.id),o=!c&&d.at&&d.at<now;return `<span class="rp-seg${c?' ok':o?' over':d===nextOpen?' cur':''}" title="${esc(LAWS[d.law].short+': '+d.l)}"></span>`}).join('')}</div>
+    <p class="hint">${done===must.length?'All required reports are done or decided. Go to Close when the incident is handled.':'You do not have to do everything now. Start with the open checkpoint below. First reports can be short, you add details later. "Not needed" with a reason is a valid answer.'}</p>`;
+}
 function renderReport(R){
   renderLaws(R);
   const list=steps(R),now=Date.now();lastSig=sig(R,now);
   if(S.step&&!list.find(d=>d.id===S.step))S.step=null;
-  if(!list.length){$('#timeline').innerHTML='<p class="empty">No reports are needed for the current answers. Record the incident in your own incident register.</p>';return}
-  const by={};list.forEach(d=>{const b=band(d,now);(by[b]=by[b]||[]).push(d)});
-  $('#timeline').innerHTML=BANDS.filter(([k])=>by[k]).map(([k,l])=>{
-    const rows=by[k].sort(byTime).map(rowHtml).join('');
-    if(k==='sent')return `<details class="band b-sent" id="sentBand"${sentOpen||(S.step&&closed(S.step))?' open':''}><summary class="band-h">${ic('check','sm')}Done <span class="n">${by[k].length}</span>${ic('chev','sm chev')}</summary><ol class="tl">${rows}</ol></details>`;
-    return `<section class="band b-${k}" aria-label="${l}"><h4 class="band-h">${l} <span class="n">${by[k].length}</span></h4><ol class="tl">${rows}</ol></section>`}).join('');
+  if(!list.length){$('#rprog').innerHTML='';$('#timeline').innerHTML='<p class="empty">No reports are needed for the current answers. Record the incident in your own incident register.</p>';return}
+  renderProgress(list,now);
+  const groups=MS.map(([k,l])=>({k,l,items:list.filter(d=>msOf(d)===k).sort(byTime)})).filter(g=>g.items.length);
+  const cur=groups.find(g=>g.k!=='might'&&g.items.some(d=>isMust(d)&&!closed(d.id)));
+  $('#timeline').innerHTML=groups.map(g=>{
+    const open=g.items.filter(d=>!closed(d.id)),over=open.filter(d=>d.at&&d.at<now),soon=open.filter(d=>d.at&&d.at-now<24*H);
+    const hasStep=g.items.some(d=>d.id===S.step),allDone=!open.length;
+    const auto=g===cur||soon.length>0||(g.k==='asap'&&open.some(isMust))||hasStep;
+    const isOpen=over.length>0||hasStep||(g.k in msOpen?msOpen[g.k]:auto);
+    const st=g.k==='might'?'might':allDone?'done':g===cur?'cur':'todo';
+    const nx=open.filter(d=>d.at).sort(byTime)[0];
+    const sum=g.k==='might'?`${g.items.length} step${g.items.length>1?'s':''}, only if they apply${g.items.length-open.length?`, ${g.items.length-open.length} decided`:''}`
+      :allDone?'All done':[`${g.items.length-open.length} of ${g.items.length} done`,over.length?`<span class="over">${over.length} overdue</span>`:'',nx&&!over.length?'next due '+esc(dueS(nx)):''].filter(Boolean).join(' · ');
+    const dot=st==='done'?ic('tick','sm'):'';
+    return `<details class="ms ms-${st}" data-ms="${g.k}"${isOpen?' open':''}><summary class="ms-h"><span class="ms-dot">${dot}</span><span class="ms-t">${g.l}</span><span class="ms-s">${sum}</span>${ic('chev','sm chev')}</summary><ol class="tl">${g.items.map(rowHtml).join('')}</ol></details>`;
+  }).join('');
 }
 function refreshStep(){
   const id=S.step;if(!id||!$('#draft'))return;const T=TPL[id],need=needOf(id);
@@ -1553,7 +1630,7 @@ function renderList(){
 function openList(){S=null;sentOpen=false;setView('list');all();window.scrollTo(0,0)}
 function openInc(id){
   const x=INC.find(i=>i.id===id);if(!x)return;
-  S=x;sentOpen=false;$('#reportMsg').textContent='';$('#listMsg').textContent='';['#closeConfirm','#delConfirm'].forEach(s=>$(s).hidden=true);
+  S=x;sentOpen=false;msOpen={};$('#reportMsg').textContent='';$('#listMsg').textContent='';['#closeConfirm','#delConfirm'].forEach(s=>$(s).hidden=true);
   setView('incident');renderStart(true);all();window.scrollTo(0,0);$('#backList').focus({preventScroll:true});
 }
 function newIncident(){$('#menu').open=false;const x=blank();INC.unshift(x);openInc(x.id);$('#f_name').focus()}
@@ -1701,6 +1778,7 @@ $('#triage').addEventListener('click',e=>{const b=e.target.closest('[data-tgo],[
 
 /* 3 Report */
 $('#timeline').addEventListener('click',e=>{
+  const mh=e.target.closest('.ms-h');if(mh){const dt=mh.parentElement;msOpen[dt.dataset.ms]=!dt.open;return}
   const ed=e.target.closest('[data-edit]');
   if(ed){const w=document.getElementById('wrap_'+ed.dataset.edit);if(w){w.hidden=false;const rv=ed.closest('.rq-v');if(rv)rv.hidden=true;const c=w.querySelector('textarea,input:checked,input');if(c)c.focus()}return}
   if(e.target.closest('#markSent')){if(S.step)toggleSent(S.step);return}
