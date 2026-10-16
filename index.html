@@ -88,7 +88,7 @@ a{color:var(--accent)}
 /* form controls */
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
 .field>label,.flab{font-size:12.5px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:2px;min-height:24px}
-input:not([type="radio"]),textarea,select{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%;min-width:0}
+input:not([type="radio"]):not([type="checkbox"]),textarea,select{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%;min-width:0}
 textarea{resize:vertical;min-height:60px}
 select{width:auto;max-width:100%;align-self:flex-start}
 
@@ -443,24 +443,24 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
 .formcta{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:10px;background:var(--accent-soft)}
 .formcta .btn{align-self:flex-start;text-decoration:none}
 .formcta .hint{color:var(--fg)}
-.flist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.ff{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr) auto;gap:4px 12px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
-.ff:first-child{border-top:0}
-.ff-l{display:flex;flex-direction:column;min-width:0}
-.ff-fi{font-weight:600;font-size:13.5px}
-.ff-en{font-size:12px;color:var(--muted)}
-.ff-l>.ff-en:first-child{font-weight:600;font-size:13.5px;color:var(--fg)}
-.ff-v{font-size:13.5px;white-space:pre-wrap;word-break:break-word;min-width:0}
-.ff-v.muted,.ff-v .muted{color:var(--muted)}
-.ff-hint .ff-v{font-size:12.5px}
-.ff-in{grid-column:2/-1;min-width:0}
-.ff-in input,.ff-in textarea{background:var(--surface)}
-.ff .linkbtn{align-self:start}
 .doneform{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:10px 12px;border-radius:8px;background:var(--ok-bg)}
 .doneform .field{flex:1 1 220px}
 .doneform input{background:var(--surface)}
 .profile{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
-@media (max-width:640px){.ff{grid-template-columns:minmax(0,1fr) auto}.ff-l{grid-column:1/-1}.ff-v{grid-column:1}.ff-in{grid-column:1/-1}}
+/* company settings */
+.setform{display:flex;flex-direction:column;gap:16px;max-width:680px}
+.setq{gap:8px}
+.setq legend{padding:0;margin-bottom:6px}
+.radlist,.toglist{display:flex;flex-direction:column;gap:4px}
+.radlist label,.tog{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:start;padding:8px 10px;border-radius:8px;cursor:pointer;min-height:40px}
+.radlist label:hover,.tog:hover{background:var(--sunk)}
+.radlist input,.tog input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--accent)}
+.tog>span{display:flex;flex-direction:column;gap:2px}
+.togrow{display:flex;align-items:flex-start;gap:2px}
+.togrow .tog{flex:1}
+.togrow .ib{margin-top:8px}
+.lawoff{font-size:12.5px;color:var(--muted)}
+.ll-set{flex-direction:row!important;flex-wrap:wrap;align-items:center;gap:4px 8px}
 @media (prefers-reduced-motion:no-preference){
   .drawer{animation:slide .18s ease-out}
   @keyframes slide{from{transform:translateX(24px)}to{transform:none}}
@@ -529,26 +529,37 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
       <summary class="btn ghost">More<svg class="i sm chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
       <div class="menu-pop">
         <button class="menu-item" id="btnNew" type="button"><svg class="i sm"><use href="#i-plus"/></svg>New incident</button>
-        <button class="menu-item" id="btnProfile" type="button" hidden><svg class="i sm"><use href="#i-building"/></svg>Company profile</button>
+        <button class="menu-item" id="btnSettings" type="button" data-settings="1"><svg class="i sm"><use href="#i-building"/></svg>Company settings</button>
         <button class="menu-item" id="btnExample" type="button"><svg class="i sm"><use href="#i-reload"/></svg>Load example</button>
       </div>
     </details>
   </header>
 
-  <section class="profile" id="profileBox" aria-labelledby="profH" hidden>
-    <div class="lhead"><h2 id="profH">Company profile</h2><button class="btn primary" id="profClose" type="button">Done</button></div>
-    <p class="hint">Reporter details for the official NIS2 form. Saved once in this browser and used for every incident. Nothing is sent anywhere from here.</p>
-    <form class="sform" id="profForm" autocomplete="off">
-      <div class="field s4"><label for="p_org">Organisation name (Organisaation nimi)</label><input id="p_org" data-pk="org"></div>
-      <div class="field s2"><label for="p_ytunnus">Business ID (Y-tunnus)</label><input id="p_ytunnus" data-pk="ytunnus" placeholder="1234567-8"></div>
-      <div class="field s2"><label for="p_first">First name (Etunimi)</label><input id="p_first" data-pk="first"></div>
-      <div class="field s2"><label for="p_last">Last name (Sukunimi)</label><input id="p_last" data-pk="last"></div>
-      <div class="field s2"><label for="p_title">Job title (Tehtävänimike)</label><input id="p_title" data-pk="title"></div>
-      <div class="field s3"><label for="p_email">Email (Sähköposti)</label><input id="p_email" data-pk="email" type="email"></div>
-      <div class="field s3"><label for="p_phone">Phone (Puhelinnumero)</label><input id="p_phone" data-pk="phone" type="tel"></div>
-      <div class="field s6"><label for="p_street">Postal address (Postiosoite)</label><input id="p_street" data-pk="street"></div>
-      <div class="field s2"><label for="p_zip">Postal code (Postinumero)</label><input id="p_zip" data-pk="zip"></div>
-      <div class="field s4"><label for="p_city">City (Postitoimipaikka)</label><input id="p_city" data-pk="city"></div>
+  <section class="profile" id="settingsBox" aria-labelledby="setH" hidden>
+    <h2 id="setH">Company settings</h2>
+    <p class="hint">Set once for your company. Every new incident starts from these settings, and open incidents are updated when you save (the change is logged). Closed incidents keep the settings they had.</p>
+    <form class="setform" id="setForm" autocomplete="off">
+      <div class="field"><label for="set_org">Organisation name</label><input id="set_org"><p class="hint">Used for new incidents.</p></div>
+      <fieldset class="q setq" aria-labelledby="setNisL"><div class="qh"><span class="qtext" id="setNisL">NIS2 status</span><button type="button" class="ib" data-help="q_nis2" aria-label="Legal basis: NIS2 scope"><svg class="i"><use href="#i-info"/></svg></button></div>
+        <p class="hint" id="setNisHint"></p>
+        <div class="radlist">
+          <label><input type="radio" name="set_nis2" id="set_nis2_important" value="important"><span>Important entity</span></label>
+          <label><input type="radio" name="set_nis2" id="set_nis2_essential" value="essential"><span>Essential entity</span></label>
+          <label><input type="radio" name="set_nis2" id="set_nis2_out" value="out"><span>Not in scope</span></label>
+          <label><input type="radio" name="set_nis2" id="set_nis2_unsure" value="unsure"><span>Not sure (the clock runs until you decide)</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="q setq"><legend class="qtext">Laws in use</legend>
+        <div class="toglist">
+          <label class="tog"><input type="checkbox" id="set_use_nis2"><span><b>NIS2 with the Finnish Cybersecurity Act</b><span class="hint">Significant incidents are reported to Fimea in three steps.</span></span></label>
+          <label class="tog"><input type="checkbox" id="set_use_gdpr"><span><b>GDPR</b><span class="hint">Personal data breaches: the Data Protection Ombudsman and the people affected.</span></span></label>
+          <label class="tog"><input type="checkbox" id="set_use_mdr"><span><b>MDR vigilance</b><span class="hint">Serious incidents with your medical devices on the market.</span></span></label>
+          <div class="togrow"><label class="tog"><input type="checkbox" id="set_use_cra"><span><b>CRA</b><span class="hint">Only if you sell non-medical products with software or connectivity, for example a non-medical app or accessory. Medical devices under the MDR are excluded (Art. 2(2)).</span></span></label><button type="button" class="ib" data-help="q_pde" aria-label="Legal basis: CRA scope"><svg class="i"><use href="#i-info"/></svg></button></div>
+        </div>
+      </fieldset>
+      <div class="field"><label for="set_basis">Basis and decided by</label><textarea id="set_basis" rows="2" placeholder="For example: 120 staff, turnover 18 MEUR, no non-medical products. Decided by Name, role, date"></textarea></div>
+      <p class="status" id="setMsg" aria-live="polite"></p>
+      <div class="navrow"><button type="button" class="btn" id="setCancel">Cancel</button><button type="submit" class="btn primary" id="setSave">Save settings</button></div>
     </form>
   </section>
 
@@ -691,9 +702,11 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
         <h2><svg class="i lg" style="color:var(--accent)"><use href="#i-book"/></svg>Rulebook</h2>
         <p>The laws and articles this tool uses right now, with the exact text. Status shows how each law applies to the incident you are working on.</p>
       </div>
+      <div class="actions"><button type="button" class="btn" data-settings="1"><svg class="i sm"><use href="#i-building"/></svg>Company settings</button>
       <div class="filter" role="group" aria-label="Filter laws">
         <button type="button" id="fltAll" aria-pressed="true" data-flt="all">All laws</button>
         <button type="button" id="fltActive" aria-pressed="false" data-flt="active">Applies to this incident</button>
+      </div>
       </div>
     </div>
     <div class="pack">
@@ -986,29 +999,28 @@ const HELP={
 
 /* ---------- Triage questions ---------- */
 const Q=[
- {g:'Your company',icon:'building'},
- {id:'nis2',k:'In NIS2 scope',q:'Is your company an essential or important entity under NIS2?',hint:'Medium-sized and larger medical device manufacturers are important entities (Annex II). The size test also counts the balance sheet and linked or partner companies. Large manufacturers of devices on the EU list of critical devices for a public health emergency are essential entities, not important ones.'},
- {id:'pde',k:'Sells CRA products',q:'Do you sell non-medical products with software or connectivity in the EU?',hint:'This is the CRA scope. Devices covered by the MDR are excluded.'},
  {g:'The incident',icon:'alert'},
  {id:'disrupt',k:'Severe disruption',q:'Has it caused, or could it cause, severe disruption to your operations or services?'},
  {id:'harm',k:'Damage to others',q:'Could it cause considerable financial loss, or damage to customers, patients or partners?',hint:'Data exposure can be significant even with no outage.'},
  {id:'malicious',k:'Malicious act suspected',q:'Do you suspect a malicious or unlawful act?'},
  {id:'cross',k:'Cross-border impact',q:'Could it affect other EU countries?'},
- {g:'Personal data',icon:'person'},
+ {g:'Personal data',icon:'person',law:'gdpr'},
  {id:'pd',k:'Personal data affected',q:'Were personal data exposed, changed, lost or unavailable?',hint:'Pseudonymised data is still personal data.'},
  {id:'controller',k:'Controller of the data',q:'Do you decide why and how this data is used (are you the controller)?',hint:'Answer No if you only handle the data for a customer (you are their processor). Unsure shows both paths.',dep:'pd'},
  {id:'risk',k:'Risk to people',q:'Is it likely to create a risk for the people concerned?',hint:'Answer No only if risk is unlikely, for example encrypted data with the key safe.',dep:'pd',dep2:'controller'},
  {id:'highrisk',k:'High risk to people',q:'Is the risk high, for example health data exposed?',dep:'pd',dep2:'controller'},
  {id:'gdprAware',k:'GDPR awareness time',q:'When did you become reasonably certain that personal data was affected?',hint:'Leave it empty to count from the incident awareness time.',dep:'pd',type:'time'},
- {g:'Medical devices',icon:'pulse'},
+ {g:'Medical devices',icon:'pulse',law:'mdr'},
  {id:'device',k:'Device on market affected',q:'Could a device on the market be affected?',hint:'For example device software, design files, or production and sterilisation records.'},
  {id:'mdrAware',k:'MDR awareness time',q:'When did anyone in the company first get information that a device on the market may be affected?',hint:'Leave it empty to count from the incident awareness time.',dep:'device',type:'time'},
  {id:'severity',k:'Vigilance severity',q:'How serious is the possible effect on patients?',dep:'device',type:'select'},
- {g:'Products (CRA)',icon:'chip',dep:'pde'},
+ {g:'Products (CRA)',icon:'chip',dep:'pde',law:'cra'},
  {id:'exploited',k:'Exploited product vulnerability',q:'Is a vulnerability in your product being actively exploited?',dep:'pde'},
  {id:'severe',k:'Product security affected',q:'Does the incident affect the security of your product?',dep:'pde'},
  {id:'craAware',k:'CRA awareness time',q:'When did you become aware of the exploited vulnerability or the severe product incident?',hint:'Leave it empty to count from the incident awareness time.',dep:'pde',type:'time'}
 ];
+/* NIS2 scope and CRA are company facts: set once in Company settings, not asked in every triage. */
+const NIS2HINT='Medium-sized and larger medical device manufacturers are important entities (Annex II). The size test also counts the balance sheet and linked or partner companies. Large manufacturers of devices on the EU list of critical devices for a public health emergency are essential entities, not important ones.';
 const SEV=[['unknown','Not decided yet'],['none','Not serious'],['serious','Serious incident'],['death','Death or unexpected serious harm to health'],['public','Serious public health threat']];
 const ANS={yes:'Yes',unsure:'Unsure',no:'No'};
 
@@ -1116,7 +1128,7 @@ const iso=s=>new Date(s).toISOString();
 function example(){
   const a=new Date(Date.now()-5*H-17*60e3);a.setSeconds(0,0);
   const t=m=>new Date(a.getTime()+m*60e3).toISOString();
-  return {v:7,id:newId(),exKey:'ransomware',example:true,createdAt:a.toISOString(),status:'open',closedAt:null,closeNote:'',
+  return {v:8,id:newId(),exKey:'ransomware',example:true,createdAt:a.toISOString(),status:'open',closedAt:null,closeNote:'',
     name:'Ransomware on production file server',org:'Example Medtech Oy',aware:toInput(a),
     desc:'Files on the production file server were encrypted at 06:40. Ransom note found on the server. Server isolated from the network, backups are being checked.',
     systems:'Production file server, label printing share',people:'About 120 employees (HR folder on the share)',
@@ -1124,14 +1136,14 @@ function example(){
     ioc:'Ransom note README_RESTORE.txt, files renamed to .lockd, RDP logins from an unknown external address at 05:52.',
     mitigation:'Server isolated, admin passwords reset, restore from the 03:00 backup started.',
     cause:'',crossb:'',consequences:'',advice:'',dpo:'',devices:'',patient:'',conclusion:'',product:'',states:'',fixdate:'',ended:'',mdrAware:'',
-    a:{nis2:'yes',pde:'no',disrupt:'yes',harm:'unsure',malicious:'yes',cross:'no',pd:'yes',controller:'yes',risk:'yes',highrisk:'unsure',device:'unsure',severity:'unknown',exploited:'no',severe:'no'},
+    a:{nis2:'yes',pde:'no',disrupt:'yes',harm:'unsure',malicious:'yes',cross:'no',pd:'yes',controller:'yes',risk:'yes',highrisk:'unsure',device:'unsure',severity:'unknown'},
     done:{},ref:{},skip:{},why:{},doneClick:{},sentText:{},gdprAware:'',craAware:'',phase:3,reached:3,tg:null,step:'nis2-ew',
     log:[{t:t(0),x:'Incident detected by EDR alert, server isolated'},{t:t(35),x:'Incident opened, awareness time set'},{t:t(50),x:'In NIS2 scope: Yes'},{t:t(52),x:'Severe disruption: Yes'},{t:t(53),x:'Malicious act suspected: Yes'},{t:t(70),x:'Personal data affected: Yes (HR folder on the share)'},{t:t(95),x:'Device on market affected: Unsure, QA asked to check production records'}]};
 }
 /* A closed example for History: lost encrypted laptop, GDPR breach with unlikely risk, so only the internal breach register entry. */
 function exampleClosed(){
   const L=(d,x)=>({t:iso(d),x});
-  return {v:7,id:newId(),exKey:'laptop',example:true,createdAt:iso('2026-09-03T09:20'),status:'closed',closedAt:iso('2026-09-05T10:20'),closeNote:'',
+  return {v:8,id:newId(),exKey:'laptop',example:true,createdAt:iso('2026-09-03T09:20'),status:'closed',closedAt:iso('2026-09-05T10:20'),closeNote:'',
     name:'Lost laptop with customer contact data',org:'Example Medtech Oy',aware:'2026-09-03T09:15',
     desc:'A sales employee lost a company laptop on a train in the morning. The disk is encrypted with BitLocker (TPM and PIN). The laptop held a local export of customer contact data: names, work emails and phone numbers.',
     systems:'One company laptop (sales), local CRM export file',people:'About 350 customer contact persons, work contact details only',
@@ -1157,7 +1169,7 @@ function exampleClosed(){
       L('2026-09-05T10:20','Incident closed')]};
 }
 const EXAMPLES={ransomware:example,laptop:exampleClosed};
-function blank(){const n=new Date();n.setSeconds(0,0);return {v:7,id:newId(),example:false,createdAt:n.toISOString(),status:'open',closedAt:null,closeNote:'',name:'',org:'',aware:toInput(n),desc:'',systems:'',people:'',mdrAware:'',a:{severity:'unknown'},gdprAware:'',craAware:'',done:{},ref:{},skip:{},why:{},doneClick:{},sentText:{},phase:1,reached:1,tg:null,step:null,log:[{t:n.toISOString(),x:'New incident opened'}]}}
+function blank(){const n=new Date();n.setSeconds(0,0);return {v:8,id:newId(),example:false,createdAt:n.toISOString(),status:'open',closedAt:null,closeNote:'',name:'',org:SETTINGS.org||'',aware:toInput(n),desc:'',systems:'',people:'',mdrAware:'',a:{severity:'unknown'},gdprAware:'',craAware:'',done:{},ref:{},skip:{},why:{},doneClick:{},sentText:{},phase:1,reached:1,tg:null,step:null,log:[{t:n.toISOString(),x:'New incident opened'}]}}
 /* Bring any saved incident up to v6. v4 and v5 were single-incident states. */
 function migrate(x){
   if(!x||typeof x!=='object'||!x.a)return null;
@@ -1167,19 +1179,48 @@ function migrate(x){
     x.status=x.signAt?'closed':'open';x.closedAt=x.signAt||null;x.closeNote='';
     if(x.example&&!x.exKey&&/^Ransomware on production file server$/.test(x.name||''))x.exKey='ransomware'}
   if(x.v===6){x.v=7;x.gdprAware=x.gdprAware||"";x.craAware=x.craAware||""}
-  if(x.v!==7)return null;
+  if(x.v===7)x.v=8;  /* v8: company settings; old incidents keep their own answers (no scope) */
+  if(x.v!==8)return null;
   x.done=x.done||{};x.why=x.why||{};x.doneClick=x.doneClick||{};x.sentText=x.sentText||{};x.ref=x.ref||{};x.skip=x.skip||{};x.log=x.log||[];x.status=x.status==='closed'?'closed':'open';
   return x;
 }
-let INC=null,S=null,view='list',flt='all';
+let INC=null,S=null,view='list',flt='all',firstRun=false;
 try{const x=JSON.parse(localStorage.getItem(IKEY));if(Array.isArray(x))INC=x.map(migrate).filter(Boolean)}catch(e){INC=null}
 if(!INC){
   /* First run of v6: move the old single incident and every archived one into the list. Old keys are left as they were. */
   INC=[];const add=x=>{const m=migrate(x);if(m&&!INC.some(i=>i.id===m.id))INC.push(m)};
   try{add(JSON.parse(localStorage.getItem(KEY)))}catch(e){}
   try{const ar=JSON.parse(localStorage.getItem(AKEY));if(Array.isArray(ar))ar.forEach(e=>add(e&&e.data))}catch(e){}
-  if(!INC.length)INC=[example(),exampleClosed()];
+  firstRun=true;
 }
+/* ---------- Company settings ----------
+   One per browser, shared by all incidents: organisation name, NIS2 status and the laws in use, with the basis and who decided.
+   Each incident keeps its own copy (S.scope) as evidence. Saving the settings updates open incidents (logged), never closed ones. */
+const SETKEY='incident-clock-settings';
+const NIS2ST={important:'Important entity',essential:'Essential entity',out:'Not in scope',unsure:'Not sure'};
+const NIS2SHORT={important:'Important',essential:'Essential',out:'not in scope',unsure:'scope not sure'};
+const LAWKEYS=['nis2','gdpr','mdr','cra'];
+const DEFSET=()=>({v:1,org:'',nis2:'important',use:{nis2:true,gdpr:true,mdr:true,cra:false},basis:''});
+let SETTINGS=null;
+try{const x=JSON.parse(localStorage.getItem(SETKEY));if(x&&x.use&&NIS2ST[x.nis2])SETTINGS=x}catch(e){}
+if(!SETTINGS){SETTINGS=DEFSET();if(INC.some(x=>x.status!=='closed'&&x.a&&x.a.pde==='yes'))SETTINGS.use.cra=true}
+function saveSettings(){try{localStorage.setItem(SETKEY,JSON.stringify(SETTINGS))}catch(e){}}
+/* Is a law in use for this incident? Incidents from before company settings have no scope and use their own answers. */
+const scopeOf=x=>x&&x.scope?x.scope:null;
+function useOf(k,x){const sc=x===null?SETTINGS:scopeOf(x===undefined?S:x);if(!sc)return true;if(k==='nis2')return sc.use.nis2&&sc.nis2!=='out';return sc.use[k]!==false}
+function scopeText(sc){
+  const on=[],off=[];
+  if(sc.use.nis2&&sc.nis2!=='out')on.push('NIS2 '+NIS2SHORT[sc.nis2]);else off.push(sc.use.nis2?'NIS2 (not in scope)':'NIS2');
+  [['gdpr','GDPR'],['mdr','MDR'],['cra','CRA']].forEach(([k,l])=>(sc.use[k]?on:off).push(l));
+  return `${on.join(', ')||'No laws'}${off.length?`; ${off.join(', ')} not in use`:''}. Basis: ${sc.basis||'not recorded'}`;
+}
+function applyScope(x,msg,when){
+  const sc={nis2:SETTINGS.nis2,use:{...SETTINGS.use},basis:SETTINGS.basis||''};
+  x.scope=sc;x.a=x.a||{};
+  x.a.nis2={important:'yes',essential:'yes',out:'no',unsure:'unsure'}[sc.nis2];x.a.pde=sc.use.cra?'yes':'no';
+  const e={t:when||new Date().toISOString(),x:`${msg}: ${scopeText(sc)}`},i=x.log.findIndex(l=>l.t>e.t);if(i<0)x.log.push(e);else x.log.splice(i,0,e);
+}
+if(firstRun&&!INC.length){const ex=example();applyScope(ex,'Company settings applied',ex.log[1].t);INC=[ex,exampleClosed()]}
 function save(){try{localStorage.setItem(IKEY,JSON.stringify(INC));localStorage.setItem(SELKEY,S?S.id:'')}catch(e){}}
 function log(x){S.log.push({t:new Date().toISOString(),x});}
 const withS=(x,fn)=>{const o=S;S=x;try{return fn()}finally{S=o}};
@@ -1260,9 +1301,10 @@ function evaluate(){
      if(ex!=='no')r.dl.push({id:'cra-fv',l:'Final report (vulnerability)',at:fx,eod:true,when:'14 days after fix',note:fx?'14 days after the fix or mitigation':'Enter the date a fix or mitigation was available'});
      if(se!=='no')r.dl.push({id:'cra-fi',l:'Final report (incident)',at:cb?addMonth(cb):null,note:sentC?'1 month after the notification was sent':'Estimated, counts from when you send the notification'})}
    R.push(r)}
-  return R;
+  /* Laws switched off in Company settings are kept as a quiet 'off' entry: left out of the strip, timeline and counts. */
+  return R.map(r=>useOf(r.key)?r:{key:r.key,law:r.law,st:'off',why:'Not in use for this company (settings).',dl:[]});
 }
-const PILL={applies:'Report',assess:'Assess',record:'Record only',none:'Not triggered',na:'Out of scope'};
+const PILL={applies:'Report',assess:'Assess',record:'Record only',none:'Not triggered',na:'Out of scope',off:'Not in use in your settings'};
 const active=r=>r.st==='applies'||r.st==='assess';
 
 /* ---------- Flow helpers ---------- */
@@ -1270,7 +1312,7 @@ const PH=[null,'What happened and when you became aware','Which laws apply','You
 const unlocked=p=>p===1||(p===2&&S.reached>=2)||(p>=3&&S.reached>=3);
 const GROUPS=[];Q.forEach(q=>{if(q.g)GROUPS.push({...q,qs:[]});else GROUPS[GROUPS.length-1].qs.push(q)});
 const shownQ=q=>(!q.dep||S.a[q.dep]!=='no')&&(!q.dep2||S.a[q.dep2]!=='no');
-const visGroups=()=>GROUPS.filter(g=>!g.dep||S.a[g.dep]!=='no');
+const visGroups=()=>GROUPS.filter(g=>(!g.dep||S.a[g.dep]!=='no')&&(!g.law||useOf(g.law)));
 const lawOf=id=>id.split('-')[0];
 const FDEF=k=>FU.find(x=>x.k===k)||{k,l:FL[k]||k};
 const tplKeys=id=>[...new Set([...TPL[id].text.toString().matchAll(/\bf\('(\w+)'\)/g)].map(m=>m[1]))];
@@ -1358,7 +1400,6 @@ function startNext(){
 /* Answers that remove a reporting duty need a reason and who decided (stored in S.why per question).
    The note is asked under the question named in q. Triage cannot be finished while one is missing. */
 const STOPS=[
- {q:'nis2',law:'nis2',on:()=>S.a.nis2==='no'},
  {q:'harm',law:'nis2',on:()=>S.a.nis2!=='no'&&S.a.disrupt==='no'&&S.a.harm==='no'},
  {q:'pd',law:'gdpr',on:()=>S.a.pd==='no'},
  {q:'controller',law:'gdpr',on:()=>S.a.pd!=='no'&&S.a.controller==='no'},
@@ -1367,9 +1408,9 @@ const STOPS=[
  {q:'severity',law:'mdr',on:()=>S.a.device!=='no'&&S.a.severity==='none'},
  {q:'severe',law:'cra',on:()=>S.a.pde!=='no'&&S.a.exploited==='no'&&S.a.severe==='no'}
 ];
-const stopOn=qid=>{const s=STOPS.find(x=>x.q===qid);return !!(s&&s.on())};
+const stopOn=qid=>{const s=STOPS.find(x=>x.q===qid);return !!(s&&useOf(s.law)&&s.on())};
 const whyOf=qid=>String((S.why||{})[qid]||'').trim();
-const missingWhy=()=>STOPS.filter(s=>s.on()&&!whyOf(s.q));
+const missingWhy=()=>STOPS.filter(s=>useOf(s.law)&&s.on()&&!whyOf(s.q));
 const whyHtml=(qid,pre)=>stopOn(qid)?`<div class="field whyf"><div class="flab"><label for="${pre}why_${qid}">Why, and who decided? (required)</label>${ib('why','why and who decided')}</div><input id="${pre}why_${qid}" data-why="${qid}" value="${esc(whyOf(qid))}" placeholder="Reason, then name and role of who decided" autocomplete="off"></div>`:'';
 function qHtml(q){
   const hint=q.hint?`<p class="hint">${esc(q.hint)}</p>`:'',why=whyHtml(q.id,'q_');
@@ -1394,9 +1435,12 @@ function goGroup(name){
 }
 
 /* ---------- 3 Report ---------- */
-function renderLaws(R){
-  $('#lawSum').innerHTML=R.map(r=>`<span class="lawpill">${lawTag(r.key)}<span class="pill p-${r.st}">${PILL[r.st]}</span></span>`).join('');
-  $('#lawList').innerHTML=R.map(r=>{const L=LAWS[r.key];return `<li class="lc-${r.key} s-${r.st}"><div class="ll-h"><span class="li-ic">${ic(L.icon,'sm')}</span><b>${esc(L.short==='MDR'?'MDR vigilance':L.short)}</b>${ib('reg-'+r.key,L.name)}<span class="pill p-${r.st}">${PILL[r.st]}</span></div><p class="why">${esc(r.why)}</p>${STOPS.some(s=>s.law===r.key&&s.on()&&!whyOf(s.q))?'<p class="why warn">Why, and who decided, is missing. Add it in Triage.</p>':''}${active(r)?`<p class="to">${ic('send','sm')}<span>Report to <b>${esc(L.to)}</b>${r.key==='nis2'?'. '+NIS2CH:''}</span></p>`:''}</li>`}).join('');
+function renderLaws(Rall){
+  /* Laws not in use (Company settings) are left out; a quiet line says which, with a link to change it. */
+  const R=Rall.filter(r=>r.st!=='off'),off=Rall.filter(r=>r.st==='off').map(r=>LAWS[r.key].short);
+  $('#lawSum').innerHTML=R.map(r=>`<span class="lawpill">${lawTag(r.key)}<span class="pill p-${r.st}">${PILL[r.st]}</span></span>`).join('')+(off.length?`<span class="lawoff">Not in use: ${esc(off.join(', '))}</span>`:'');
+  $('#lawList').innerHTML=R.map(r=>{const L=LAWS[r.key];return `<li class="lc-${r.key} s-${r.st}"><div class="ll-h"><span class="li-ic">${ic(L.icon,'sm')}</span><b>${esc(L.short==='MDR'?'MDR vigilance':L.short)}</b>${ib('reg-'+r.key,L.name)}<span class="pill p-${r.st}">${PILL[r.st]}</span></div><p class="why">${esc(r.why)}</p>${STOPS.some(s=>s.law===r.key&&s.on()&&!whyOf(s.q))?'<p class="why warn">Why, and who decided, is missing. Add it in Triage.</p>':''}${active(r)?`<p class="to">${ic('send','sm')}<span>Report to <b>${esc(L.to)}</b>${r.key==='nis2'?'. '+NIS2CH:''}</span></p>`:''}</li>`}).join('')
+    +`<li class="ll-set"><span class="hint">${off.length?`Not in use for this company: ${esc(off.join(', '))}. `:''}NIS2 scope and the laws in use come from Company settings.</span> <button type="button" class="linkbtn" data-settings="1">Change in settings</button></li>`;
 }
 function rowHtml(d){
   const open=S.step===d.id,sent=S.done[d.id],skip=S.skip[d.id],miss=missing(d.id);
@@ -1418,74 +1462,6 @@ const FORM_URL='https://eservices.traficom.fi/ContactForms/form/NIS2-Ilmoitus?la
 const FORM_URL_EN='https://eservices.traficom.fi/ContactForms/form/NIS2-Ilmoitus?langid=en';
 const FORMS={'nis2-ew':'Teen ensi-ilmoituksen','nis2-n':'Teen jatkoilmoituksen','nis2-i':'Annan väliraportin','nis2-p':'Annan väliraportin','nis2-f':'Annan loppuraportin'};
 const FORMS_EN={'nis2-ew':'Make a first-time notification','nis2-n':'Make a follow-up notification','nis2-i':'I will provide an interim report','nis2-p':'I will provide an interim report','nis2-f':'I will provide a final report'};
-/* Company profile: reporter details, stored once in this browser and shared by all incidents. */
-const PKEY='incident-clock-profile';
-const PF=[['org','Organisaation nimi','Organisation name'],['ytunnus','Y-tunnus','Business ID'],['first','Etunimi','First name'],['last','Sukunimi','Last name'],['title','Tehtävänimike','Job title'],
-  ['email','Sähköposti','Email'],['phone','Puhelinnumero','Phone'],['street','Postiosoite','Postal address'],['zip','Postinumero','Postal code'],['city','Postitoimipaikka','City']];
-let PROFILE={};
-try{const x=JSON.parse(localStorage.getItem(PKEY));if(x&&typeof x==='object')PROFILE=x}catch(e){}
-function saveProfile(){try{localStorage.setItem(PKEY,JSON.stringify(PROFILE))}catch(e){}}
-const pv=k=>String(PROFILE[k]||'').trim()||(k==='org'?val('org'):'');
-const fiTime=s=>{const d=new Date(s);return isNaN(d)?'':`${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
-const FI3={yes:'Kyllä, kuvaa tarkemmin (Yes, describe)',unsure:'Ehkä, kuvaa tarkemmin (Maybe, describe)',no:'Ei (No)'};
-const FIX={yes:'Kyllä (Yes)',unsure:'Ehkä (Maybe)',no:'Ei (No)'};
-/* Has the incident been reported to other authorities? Derived from the GDPR and MDR steps. */
-function otherAuth(){
-  const R=evaluate(),sentO=['gdpr-a','mdr-r'].some(id=>S.done[id]),due=R.some(r=>(r.key==='gdpr'||r.key==='mdr')&&active(r));
-  return sentO?'On (Yes)':due?'Ei, mutta tullaan ilmoittamaan (No, but will be)':'Ei (No)';
-}
-const prevRef=id=>{const p={'nis2-n':'nis2-ew','nis2-i':'nis2-n','nis2-p':'nis2-n','nis2-f':'nis2-n'}[id];return p&&S.done[p]?`${fiTime(S.done[p])}${S.ref[p]?', '+S.ref[p]:''}`:''};
-/* One row per form field, in the form's order. kind: copy (text to paste), choose (an option to pick), hint (only you know). */
-function formFields(id){
-  const F=(fi,en,o)=>({fi,en,...o});
-  const desc=[val('desc'),val('systems')?'Systems affected: '+val('systems'):''].filter(Boolean).join('\n');
-  const rows=[F('Ilmoituksen tyyppi','Report type',{kind:'choose',v:FORMS[id]})];
-  if(id==='nis2-ew'){
-    const typeSug=v('disrupt')==='yes'?'Palvelukatkos (vaikutus saatavuuteen ja/tai palvelun jatkuvuudenhallintaan)':(v('pd')==='yes'?'Muu vaikutus palveluun (vaikutus luottamuksellisuuteen, aitouteen tai eheyteen)':'');
-    rows.push(F('Toimiala','Sector',{kind:'choose',v:'Valmistus'}),
-      F('Toimialan osa','Sub-sector',{kind:'choose',v:'Lääkinnällisten laitteiden ja in vitro -diagnostiikkaan tarkoitettujen lääkinnällisten laitteiden valmistus'}),
-      F('Vaikuttaa muihin toimialoihin','Affects other sectors',{kind:'hint',v:'Answer from what you know now.'}),
-      F('Havaitsemisaika','Detection time',{kind:'copy',v:fiTime(S.aware),src:'Awareness time'}),
-      typeSug?F('Merkittävän poikkeaman tyyppi','Type of incident',{kind:'choose',v:typeSug}):F('Merkittävän poikkeaman tyyppi','Type of incident',{kind:'hint',v:'Options: Palvelukatkos (outage), Muu vaikutus palveluun (confidentiality, authenticity or integrity), Vaikutus muihin järjestelmiin tai ei vaikutusta palveluun (other systems or no service impact), Vaikutus varmistuksiin (backups).'}),
-      F('Tapahtuman kuvaus','Description',{kind:'copy',v:desc,k:'desc'}),
-      F('Rikos tai vihamielinen teko','Malicious or unlawful act',{kind:'choose',v:FI3[v('malicious')]}),
-      F('Ilmoitettu muille viranomaisille?','Reported to other authorities',{kind:'choose',v:otherAuth()}),
-      F('Rajat ylittävät vaikutukset','Cross-border impact in the EU',{kind:'choose',v:FIX[v('cross')]}),
-      F('Lisätiedot','Additional information',{kind:'copy',v:[val('impact')?'Impact so far: '+val('impact'):'',val('mitigation')?'Measures so far: '+val('mitigation'):''].filter(Boolean).join('\n'),opt:true}),
-      F('Liitteet','Attachments',{kind:'hint',v:'Optional.'}));
-  }else{
-    const pr=prevRef(id);
-    rows.push(F('','Note',{kind:'hint',v:'Field names for this report type may differ a little in the form. Match them by meaning.'}),F('','Earlier report',{kind:pr?'copy':'hint',v:pr||'Give the date and reference of your earlier report, if the form asks for it.'}),
-      F('Havaitsemisaika','Detection time',{kind:'copy',v:fiTime(S.aware),src:'Awareness time'}));
-    if(id==='nis2-n')rows.push(F('','Update and description',{kind:'copy',v:desc,k:'desc'}),F('','Severity and impact',{kind:'copy',v:val('impact'),k:'impact'}),
-      F('','Indicators of compromise',{kind:'copy',v:val('ioc'),k:'ioc',opt:true}),F('','Measures so far',{kind:'copy',v:val('mitigation'),k:'mitigation'}),
-      F('Rikos tai vihamielinen teko','Malicious or unlawful act',{kind:'choose',v:FI3[v('malicious')]}),F('Rajat ylittävät vaikutukset','Cross-border impact in the EU',{kind:'choose',v:FIX[v('cross')]}));
-    else if(id==='nis2-f')rows.push(F('','Detailed description, severity and impact',{kind:'copy',v:[desc,val('impact')].filter(Boolean).join('\n'),k:'impact'}),
-      F('','Type of threat or root cause',{kind:'copy',v:val('cause'),k:'cause'}),F('','Applied and ongoing mitigation',{kind:'copy',v:val('mitigation'),k:'mitigation'}),
-      F('Rajat ylittävät vaikutukset','Cross-border impact',{kind:'copy',v:v('cross')==='no'?'None identified.':val('crossb'),k:v('cross')==='no'?null:'crossb'}));
-    else rows.push(F('','Status and impact',{kind:'copy',v:val('impact'),k:'impact'}),F('','Mitigation applied and ongoing',{kind:'copy',v:val('mitigation'),k:'mitigation'}),
-      F('','Root cause so far',{kind:'copy',v:val('cause'),k:'cause',opt:true}));
-    rows.push(F('Lisätiedot','Additional information',{kind:'hint',v:'Optional.'}));
-  }
-  rows.push(F('Ilmoittaja','Reporter',{kind:'choose',v:'Yrityksen puolesta (On behalf of a company)'}));
-  PF.forEach(([k,fi,en])=>rows.push(F(fi,en,{kind:'copy',v:pv(k),pk:k})));
-  rows.push(F('','Support from the NCSC-FI CSIRT',{kind:'hint',v:'Tick the box if you want support from the NCSC-FI CSIRT or want to give it more information.'}));
-  return rows;
-}
-const formText=id=>formFields(id).filter(r=>r.kind!=='hint').map(r=>`${r.fi?r.fi+' ('+r.en+')':r.en}: ${r.v||'-'}`).join('\n');
-let ffVals=[];
-function formListHtml(id){
-  ffVals=[];
-  return `<ul class="flist">${formFields(id).map(r=>{
-    let val2;
-    if(r.kind==='copy'&&r.v){const i=ffVals.push(r.v)-1;val2=`<span class="ff-v" id="ffv_${i}">${esc(r.v)}</span><button type="button" class="linkbtn" data-copy="${i}" aria-label="Copy ${esc(r.en)}">Copy</button>`}
-    else if(r.kind==='copy'&&r.pk)val2=`<span class="ff-in"><label class="sr" for="ffp_${r.pk}">${esc(r.en)}</label><input id="ffp_${r.pk}" data-pk="${r.pk}" placeholder="Add once, saved for all incidents" autocomplete="off"></span>`;
-    else if(r.kind==='copy'&&r.k)val2=`<span class="ff-in"><label class="sr" for="ffk_${r.k}">${esc(r.en)}</label><textarea id="ffk_${r.k}" data-k="${r.k}" data-ff="1" rows="2" placeholder="${r.opt?'Optional. ':''}Not filled in yet"></textarea></span>`;
-    else if(r.kind==='copy')val2=`<span class="ff-v muted">${r.opt?'Optional, nothing yet':'Nothing yet'}</span>`;
-    else if(r.kind==='choose')val2=`<span class="ff-v"><span class="muted">Choose:</span> ${esc(r.v)}</span>`;
-    else val2=`<span class="ff-v muted">${esc(r.v)}</span>`;
-    return `<li class="ff ff-${r.kind}"><span class="ff-l">${r.fi?`<span class="ff-fi" lang="fi">${esc(r.fi)}</span>`:''}<span class="ff-en">${esc(r.en)}${r.src?' · from '+esc(r.src):''}</span></span>${val2}</li>`}).join('')}</ul>`;
-}
 /* Sent time edited after "Mark as sent": the original click time is kept. */
 const editedAt=id=>S.doneClick&&S.doneClick[id]&&S.done[id]&&S.doneClick[id]!==S.done[id]?S.doneClick[id]:null;
 function stepStatus(id){const sent=S.done[id],skip=S.skip[id],miss=missing(id);
@@ -1616,7 +1592,7 @@ function toggleSent(id){
   $('#reportMsg').textContent=`Marked as ${rec?'recorded':'sent'} and logged: ${lab}, ${fmtLog(new Date())}. Correct the time or add a reference below if needed.`;
   const tf=$('#sent_ref')||$('#sent_at');if(tf)tf.focus();
 }
-/* Official form step done: the time reported (default the click time) and the confirmation number. A snapshot of the answers is kept. */
+/* Official form step done: the time reported (default the click time) and the optional confirmation number. No copy of the form is kept. */
 function markFormDone(id,atVal,def,ref){
   const now=new Date().toISOString(),changed=atVal&&atVal!==def,t=changed?new Date(atVal):null;
   if(changed&&isNaN(t)){$('#draftStatus').textContent='Enter a valid time.';return}
@@ -1624,7 +1600,6 @@ function markFormDone(id,atVal,def,ref){
   log(`Reported in the official service: ${stepLab(id)}${t?', reported at '+fmtLog(t):''}${ref?', confirmation '+ref:''}`);all();
   $('#reportMsg').textContent=`Marked as done and logged: ${stepLab(id)}, ${fmtLog(new Date(S.done[id]))}${ref?', confirmation '+ref:''}.`;
 }
-function renderProfile(){document.querySelectorAll('#profForm [data-pk]').forEach(el=>{if(el!==document.activeElement)el.value=PROFILE[el.dataset.pk]||''})}
 function setSentTime(id,value){
   const d=new Date(value);if(!value||isNaN(d))return;
   if(!S.doneClick[id])S.doneClick[id]=S.done[id];
@@ -1659,11 +1634,12 @@ function renderClose(R){
 const dur=ms=>{const h=Math.round(ms/H);return h>=48?Math.round(h/24)+' days':Math.max(h,1)+' h'};
 /* Finnish section next to the NIS2 article: early warning and notification 11 §, progress 12 §, final 13 §, customer notices 14 §. */
 const FIS={'nis2-ew':'11 §','nis2-n':'11 §','nis2-i':'12 §','nis2-p':'12 §','nis2-f':'13 §','nis2-c':'14 §','nis2-t':'14 §'};
-const whyNotes=law=>STOPS.filter(s=>s.law===law&&s.on()).map(s=>{const q=Q.find(x=>x.id===s.q);return `${q.k}: ${whyOf(s.q)||'reason and decider not recorded'}`}).join('. ');
+const whyNotes=law=>STOPS.filter(s=>s.law===law&&useOf(law)&&s.on()).map(s=>{const q=Q.find(x=>x.id===s.q);return `${q.k}: ${whyOf(s.q)||'reason and decider not recorded'}`}).join('. ');
 function duties(R){
   const now=Date.now(),rows=[];
   R.forEach(r=>{
     const notes=whyNotes(r.key);
+    if(r.st==='off'){const sc=scopeOf(S);rows.push({law:r.key,duty:'Not in use for this company (settings)',cite:'',due:'',done:'',res:'nr',txt:'Not in use',why:'Basis: '+(sc&&sc.basis||'not recorded')});return}
     if(!(active(r)||r.st==='record')){rows.push({law:r.key,duty:'No reporting duty',cite:'',due:'',done:'',res:'nr',txt:PILL[r.st],why:r.why+(notes?' Decision: '+notes:'')});return}
     if(notes)rows.push({law:r.key,duty:'Duty removed after triage',cite:'',due:'',done:'',res:'nr',txt:'Not required',why:'Decision: '+notes});
     r.dl.filter(d=>TPL[d.id]).forEach(d=>{
@@ -1774,10 +1750,32 @@ function openInc(id){
   S=x;sentOpen=false;msOpen={};$('#reportMsg').textContent='';$('#listMsg').textContent='';['#closeConfirm','#delConfirm'].forEach(s=>$(s).hidden=true);
   setView('incident');renderStart(true);all();window.scrollTo(0,0);$('#backList').focus({preventScroll:true});
 }
-function newIncident(){$('#menu').open=false;const x=blank();INC.unshift(x);openInc(x.id);$('#f_name').focus()}
+/* ---------- Company settings panel ---------- */
+function openSettings(){
+  $('#menu').open=false;
+  $('#set_org').value=SETTINGS.org||'';$('#setNisHint').textContent=NIS2HINT;
+  document.querySelectorAll('input[name="set_nis2"]').forEach(r=>r.checked=r.value===SETTINGS.nis2);
+  LAWKEYS.forEach(k=>$('#set_use_'+k).checked=!!SETTINGS.use[k]);
+  $('#set_basis').value=SETTINGS.basis||'';$('#setMsg').textContent='';
+  $('#settingsBox').hidden=false;window.scrollTo(0,0);$('#set_org').focus();
+}
+function saveSettingsForm(){
+  const nis=(document.querySelector('input[name="set_nis2"]:checked')||{}).value||'unsure';
+  const next={v:1,org:$('#set_org').value.trim(),nis2:nis,use:{},basis:$('#set_basis').value.trim()};
+  LAWKEYS.forEach(k=>next.use[k]=$('#set_use_'+k).checked);
+  SETTINGS=next;saveSettings();
+  /* Update open incidents whose copy of the settings differs; closed incidents keep theirs. */
+  let n=0;const txt=scopeText(next);
+  INC.forEach(x=>{if(x.status==='closed'||(x.scope&&scopeText(x.scope)===txt))return;applyScope(x,'Company settings changed');n++});
+  $('#settingsBox').hidden=true;all();
+  const m=`Settings saved.${n?` ${n} open incident${n>1?'s were':' was'} updated and the change is in ${n>1?'their':'its'} decision log.`:''}`;
+  if(view==='list')$('#listMsg').textContent=m;else if(S){$('#reportMsg').textContent=m}
+  window.scrollTo(0,0);
+}
+function newIncident(){$('#menu').open=false;const x=blank();applyScope(x,'Company settings applied',x.createdAt);INC.unshift(x);openInc(x.id);$('#f_name').focus()}
 function loadExamples(){
   $('#menu').open=false;
-  const miss=Object.keys(EXAMPLES).filter(k=>!INC.some(x=>x.exKey===k));miss.forEach(k=>INC.push(EXAMPLES[k]()));
+  const miss=Object.keys(EXAMPLES).filter(k=>!INC.some(x=>x.exKey===k));miss.forEach(k=>{const ex=EXAMPLES[k]();if(k==='ransomware')applyScope(ex,'Company settings applied',ex.log[1].t);INC.push(ex)});
   openList();$('#listMsg').textContent=miss.length?`Added ${miss.length} example incident${miss.length>1?'s':''}.`:'The example incidents are already in the list.';
 }
 
@@ -1830,7 +1828,9 @@ const SOON=[
 ];
 function renderRules(){
   /* Status pills and the filter need an open incident; on the list they are left out. */
-  const R=S?evaluate():[];const st={};R.forEach(r=>st[r.key]=r.st);st.fi=st.nis2;
+  const R=S?evaluate():[];const st={};R.forEach(r=>st[r.key]=r.st);
+  if(!S)LAWKEYS.forEach(k=>{if(!useOf(k,null))st[k]='off'});  /* on the list: mark laws not in use in the company settings */
+  st.fi=st.nis2;
   const fa=$('#fltActive');fa.disabled=!S;fa.title=S?'':'Open an incident to use this filter';if(!S&&flt!=='all'){flt='all';document.querySelectorAll('.filter button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.flt==='all'))}
   const order=['nis2','fi','gdpr','mdr','cra'];
   const used={};Object.entries(REF).forEach(([k,r])=>{(used[r.law]=used[r.law]||[]).push(k)});
@@ -1885,10 +1885,9 @@ document.querySelector('.filter').addEventListener('click',e=>{const b=e.target.
 $('#newInc').addEventListener('click',newIncident);
 $('#btnNew').addEventListener('click',newIncident);
 $('#btnExample').addEventListener('click',loadExamples);
-$('#btnProfile').addEventListener('click',()=>{$('#menu').open=false;renderProfile();$('#profileBox').hidden=false;window.scrollTo(0,0);$('#p_org').focus()});
-$('#profClose').addEventListener('click',()=>{$('#profileBox').hidden=true;all();$('#menu summary').focus()});
-$('#profForm').addEventListener('input',e=>{const k=e.target.dataset.pk;if(!k)return;PROFILE[k]=e.target.value;saveProfile()});
-$('#profForm').addEventListener('submit',e=>e.preventDefault());
+document.addEventListener('click',e=>{if(e.target.closest('[data-settings]')){e.preventDefault();openSettings()}});
+$('#setForm').addEventListener('submit',e=>{e.preventDefault();saveSettingsForm()});
+$('#setCancel').addEventListener('click',()=>{$('#settingsBox').hidden=true;$('#menu summary').focus()});
 ['#openList','#histList'].forEach(s=>$(s).addEventListener('click',e=>{const b=e.target.closest('[data-inc]');if(b)openInc(b.dataset.inc)}));
 $('#copyAll').addEventListener('click',()=>{const txt=JSON.stringify({app:'Incident Clock',exported:new Date().toISOString(),incidents:INC},null,2);$('#allJsonOut').textContent=txt;copy(txt,$('#allJsonOut'),$('#allJsonStatus'))});
 $('#backList').addEventListener('click',openList);
@@ -1924,7 +1923,6 @@ $('#triage').addEventListener('click',e=>{const b=e.target.closest('[data-tgo],[
 /* 3 Report */
 $('#timeline').addEventListener('click',e=>{
   const mh=e.target.closest('.ms-h');if(mh){const dt=mh.parentElement;msOpen[dt.dataset.ms]=!dt.open;return}
-  const cp=e.target.closest('[data-copy]');if(cp){const i=+cp.dataset.copy;copy(ffVals[i],$('#ffv_'+i),$('#formStatus'));return}
   if(e.target.closest('#markForm')){const f=$('#doneForm'),a=$('#done_at'),v0=toInput(new Date());a.value=v0;a.dataset.def=v0;f.hidden=false;$('#markForm').hidden=true;$('#done_ref').focus();return}
   if(e.target.closest('#doneCancel')){$('#doneForm').hidden=true;$('#markForm').hidden=false;$('#markForm').focus();return}
   const ed=e.target.closest('[data-edit]');
@@ -1942,8 +1940,8 @@ $('#timeline').addEventListener('submit',e=>{if(e.target.id==='doneForm'){e.prev
   if(e.target.id!=='skipForm')return;e.preventDefault();
   const x=$('#skip_reason').value.trim();if(!x){$('#draftStatus').textContent='Write a short reason first. It goes in the decision log.';$('#skip_reason').focus();return}
   skipStep(S.step,x)});
-$('#timeline').addEventListener('input',e=>{if(whyInput(e))return;if(e.target.dataset.pk){PROFILE[e.target.dataset.pk]=e.target.value;saveProfile();return}const k=e.target.dataset.k;if(!k)return;S[k]=e.target.value;edited();if(!TIMED[k])refreshStep();save()});
-$('#timeline').addEventListener('change',e=>{const t=e.target;if(whyChange(e))return;if(t.dataset.pk||t.dataset.ff){all();return}
+$('#timeline').addEventListener('input',e=>{if(whyInput(e))return;const k=e.target.dataset.k;if(!k)return;S[k]=e.target.value;edited();if(!TIMED[k])refreshStep();save()});
+$('#timeline').addEventListener('change',e=>{const t=e.target;if(whyChange(e))return;
   if(t.dataset.k&&TIMED[t.dataset.k]){log(`${TIMED[t.dataset.k]} set to ${t.value.replace('T',' ')||'(empty)'}`);all();return}
   if(t.dataset.a){const id=t.dataset.a;S.a[id]=t.value;const q=Q.find(x=>x.id===id);log(`${q.k}: ${ANS[t.value]}`);edited();all()}});
 /* Actual sent time and reference: saved when the field is left or Enter is pressed. */
