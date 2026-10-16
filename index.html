@@ -142,7 +142,7 @@ select{width:auto;max-width:100%;align-self:flex-start}
 
 /* start */
 .sform{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px 16px}
-.s2{grid-column:span 2}.s4{grid-column:span 4}.s6{grid-column:1/-1}
+.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}.s6{grid-column:1/-1}
 
 /* triage */
 .tg-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -439,6 +439,28 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
 .trow.done.open{background:var(--bg)}
 .trow.might:not(.done){background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
 @media (max-width:520px){.ms-s{margin-left:0;flex-basis:100%;order:2}.ms-h .chev{order:1;margin-left:auto}.ms{padding-left:26px}.ms-dot{left:-26px}.ms::before{left:7px}}
+/* NIS2 official form steps and company profile */
+.formcta{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:10px;background:var(--accent-soft)}
+.formcta .btn{align-self:flex-start;text-decoration:none}
+.formcta .hint{color:var(--fg)}
+.flist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ff{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr) auto;gap:4px 12px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
+.ff:first-child{border-top:0}
+.ff-l{display:flex;flex-direction:column;min-width:0}
+.ff-fi{font-weight:600;font-size:13.5px}
+.ff-en{font-size:12px;color:var(--muted)}
+.ff-l>.ff-en:first-child{font-weight:600;font-size:13.5px;color:var(--fg)}
+.ff-v{font-size:13.5px;white-space:pre-wrap;word-break:break-word;min-width:0}
+.ff-v.muted,.ff-v .muted{color:var(--muted)}
+.ff-hint .ff-v{font-size:12.5px}
+.ff-in{grid-column:2/-1;min-width:0}
+.ff-in input,.ff-in textarea{background:var(--surface)}
+.ff .linkbtn{align-self:start}
+.doneform{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:10px 12px;border-radius:8px;background:var(--ok-bg)}
+.doneform .field{flex:1 1 220px}
+.doneform input{background:var(--surface)}
+.profile{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+@media (max-width:640px){.ff{grid-template-columns:minmax(0,1fr) auto}.ff-l{grid-column:1/-1}.ff-v{grid-column:1}.ff-in{grid-column:1/-1}}
 @media (prefers-reduced-motion:no-preference){
   .drawer{animation:slide .18s ease-out}
   @keyframes slide{from{transform:translateX(24px)}to{transform:none}}
@@ -507,10 +529,28 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
       <summary class="btn ghost">More<svg class="i sm chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
       <div class="menu-pop">
         <button class="menu-item" id="btnNew" type="button"><svg class="i sm"><use href="#i-plus"/></svg>New incident</button>
+        <button class="menu-item" id="btnProfile" type="button"><svg class="i sm"><use href="#i-building"/></svg>Company profile</button>
         <button class="menu-item" id="btnExample" type="button"><svg class="i sm"><use href="#i-reload"/></svg>Load example</button>
       </div>
     </details>
   </header>
+
+  <section class="profile" id="profileBox" aria-labelledby="profH" hidden>
+    <div class="lhead"><h2 id="profH">Company profile</h2><button class="btn primary" id="profClose" type="button">Done</button></div>
+    <p class="hint">Reporter details for the official NIS2 form. Saved once in this browser and used for every incident. Nothing is sent anywhere from here.</p>
+    <form class="sform" id="profForm" autocomplete="off">
+      <div class="field s4"><label for="p_org">Organisation name (Organisaation nimi)</label><input id="p_org" data-pk="org"></div>
+      <div class="field s2"><label for="p_ytunnus">Business ID (Y-tunnus)</label><input id="p_ytunnus" data-pk="ytunnus" placeholder="1234567-8"></div>
+      <div class="field s2"><label for="p_first">First name (Etunimi)</label><input id="p_first" data-pk="first"></div>
+      <div class="field s2"><label for="p_last">Last name (Sukunimi)</label><input id="p_last" data-pk="last"></div>
+      <div class="field s2"><label for="p_title">Job title (Tehtävänimike)</label><input id="p_title" data-pk="title"></div>
+      <div class="field s3"><label for="p_email">Email (Sähköposti)</label><input id="p_email" data-pk="email" type="email"></div>
+      <div class="field s3"><label for="p_phone">Phone (Puhelinnumero)</label><input id="p_phone" data-pk="phone" type="tel"></div>
+      <div class="field s6"><label for="p_street">Postal address (Postiosoite)</label><input id="p_street" data-pk="street"></div>
+      <div class="field s2"><label for="p_zip">Postal code (Postinumero)</label><input id="p_zip" data-pk="zip"></div>
+      <div class="field s4"><label for="p_city">City (Postitoimipaikka)</label><input id="p_city" data-pk="city"></div>
+    </form>
+  </section>
 
   <div id="viewList" class="view">
     <section class="lsec" aria-labelledby="openListH">
@@ -1241,7 +1281,7 @@ const closed=id=>!!(S.done[id]||S.skip[id]);
 const stepLab=id=>`${LAWS[lawOf(id)].short}: ${TPL[id].title}`;
 /* CRA early warning: the vulnerability case follows Art. 14(2)(a), the incident case Art. 14(4)(a). */
 const needOf=id=>{const T=TPL[id];if(id==='cra-ew'&&v('severe')==='no'&&v('exploited')!=='no')return T.need.filter(n=>n.a!=='malicious').map(n=>({...n,ref:'cra_14_2'}));return T.need};
-const missing=id=>needOf(id).filter(n=>!isDone(n)).length;
+const missing=id=>FORMS[id]?0:needOf(id).filter(n=>!isDone(n)).length;  /* official-form steps: the checklist is advice only */
 const fmtDay=d=>d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
 const dueS=d=>d.eod?fmtDay(d.at)+', end of day':fmt(d.at);
 function steps(R){const out=[];R.forEach(r=>{if(active(r)||r.st==='record')r.dl.forEach(d=>{if(TPL[d.id])out.push({...d,law:r.key})})});return out}
@@ -1360,7 +1400,7 @@ function renderLaws(R){
 }
 function rowHtml(d){
   const open=S.step===d.id,sent=S.done[d.id],skip=S.skip[d.id],miss=missing(d.id);
-  const right=sent?`<span class="stat ok">${ic('check','sm')}${RECORD.includes(d.id)?'Recorded':'Sent'} ${fmtLog(new Date(sent)).slice(5)}</span>`
+  const right=sent?`<span class="stat ok">${ic('check','sm')}${RECORD.includes(d.id)?'Recorded':FORMS[d.id]?'Reported':'Sent'} ${fmtLog(new Date(sent)).slice(5)}</span>`
     :skip?`<span class="stat">${ic('x','sm')}Not needed</span>`
     :d.at?`<span class="count" data-due="${d.at.getTime()}" data-id="${d.id}">--</span>`:(d.when?`<span class="when">${esc(d.when)}</span>`:'');
   const sub=[d.at?'Due '+dueS(d):'',d.note].filter(Boolean).join(' · ');
@@ -1371,11 +1411,85 @@ function ctlHtml(k){const x=FDEF(k),id='fill_'+k;
   return x.type?`<input type="${x.type}" id="${id}" data-k="${k}" value="${esc(S[k]||'')}">`:`<textarea id="${id}" data-k="${k}" rows="2">${esc(S[k]||'')}</textarea>`}
 function ansHtml(a){const q=Q.find(x=>x.id===a);
   return `<div class="seg" role="radiogroup" aria-label="${esc(q?q.q:a)}">${Object.entries(ANS).map(([x,l])=>`<label><input type="radio" id="fill_a_${a}_${x}" name="fill_a_${a}" data-a="${a}" value="${x}" ${S.a[a]===x?'checked':''}><span>${l}</span></label>`).join('')}</div>${whyHtml(a,'fill_')}`}
+/* ---------- NIS2 official form (Traficom e-services, NIS2-lomake) ----------
+   NIS2 reports are made in the official online form. These steps show what the form asks, with the answers the tool already has
+   and a Copy button for each, then "Mark as done" with the time and the confirmation number. The legal checklist becomes advice. */
+const FORM_URL='https://eservices.traficom.fi/ContactForms/form/NIS2-Ilmoitus?langid=fi';
+const FORMS={'nis2-ew':'Teen ensi-ilmoituksen','nis2-n':'Teen jatkoilmoituksen','nis2-i':'Annan väliraportin','nis2-p':'Annan väliraportin','nis2-f':'Annan loppuraportin'};
+/* Company profile: reporter details, stored once in this browser and shared by all incidents. */
+const PKEY='incident-clock-profile';
+const PF=[['org','Organisaation nimi','Organisation name'],['ytunnus','Y-tunnus','Business ID'],['first','Etunimi','First name'],['last','Sukunimi','Last name'],['title','Tehtävänimike','Job title'],
+  ['email','Sähköposti','Email'],['phone','Puhelinnumero','Phone'],['street','Postiosoite','Postal address'],['zip','Postinumero','Postal code'],['city','Postitoimipaikka','City']];
+let PROFILE={};
+try{const x=JSON.parse(localStorage.getItem(PKEY));if(x&&typeof x==='object')PROFILE=x}catch(e){}
+function saveProfile(){try{localStorage.setItem(PKEY,JSON.stringify(PROFILE))}catch(e){}}
+const pv=k=>String(PROFILE[k]||'').trim()||(k==='org'?val('org'):'');
+const fiTime=s=>{const d=new Date(s);return isNaN(d)?'':`${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
+const FI3={yes:'Kyllä, kuvaa tarkemmin (Yes, describe)',unsure:'Ehkä, kuvaa tarkemmin (Maybe, describe)',no:'Ei (No)'};
+const FIX={yes:'Kyllä (Yes)',unsure:'Ehkä (Maybe)',no:'Ei (No)'};
+/* Has the incident been reported to other authorities? Derived from the GDPR and MDR steps. */
+function otherAuth(){
+  const R=evaluate(),sentO=['gdpr-a','mdr-r'].some(id=>S.done[id]),due=R.some(r=>(r.key==='gdpr'||r.key==='mdr')&&active(r));
+  return sentO?'On (Yes)':due?'Ei, mutta tullaan ilmoittamaan (No, but will be)':'Ei (No)';
+}
+const prevRef=id=>{const p={'nis2-n':'nis2-ew','nis2-i':'nis2-n','nis2-p':'nis2-n','nis2-f':'nis2-n'}[id];return p&&S.done[p]?`${fiTime(S.done[p])}${S.ref[p]?', '+S.ref[p]:''}`:''};
+/* One row per form field, in the form's order. kind: copy (text to paste), choose (an option to pick), hint (only you know). */
+function formFields(id){
+  const F=(fi,en,o)=>({fi,en,...o});
+  const desc=[val('desc'),val('systems')?'Systems affected: '+val('systems'):''].filter(Boolean).join('\n');
+  const rows=[F('Ilmoituksen tyyppi','Report type',{kind:'choose',v:FORMS[id]})];
+  if(id==='nis2-ew'){
+    const typeSug=v('disrupt')==='yes'?'Palvelukatkos (vaikutus saatavuuteen ja/tai palvelun jatkuvuudenhallintaan)':(v('pd')==='yes'?'Muu vaikutus palveluun (vaikutus luottamuksellisuuteen, aitouteen tai eheyteen)':'');
+    rows.push(F('Toimiala','Sector',{kind:'choose',v:'Valmistus'}),
+      F('Toimialan osa','Sub-sector',{kind:'choose',v:'Lääkinnällisten laitteiden ja in vitro -diagnostiikkaan tarkoitettujen lääkinnällisten laitteiden valmistus'}),
+      F('Vaikuttaa muihin toimialoihin','Affects other sectors',{kind:'hint',v:'Answer from what you know now.'}),
+      F('Havaitsemisaika','Detection time',{kind:'copy',v:fiTime(S.aware),src:'Awareness time'}),
+      typeSug?F('Merkittävän poikkeaman tyyppi','Type of incident',{kind:'choose',v:typeSug}):F('Merkittävän poikkeaman tyyppi','Type of incident',{kind:'hint',v:'Options: Palvelukatkos (outage), Muu vaikutus palveluun (confidentiality, authenticity or integrity), Vaikutus muihin järjestelmiin tai ei vaikutusta palveluun (other systems or no service impact), Vaikutus varmistuksiin (backups).'}),
+      F('Tapahtuman kuvaus','Description',{kind:'copy',v:desc,k:'desc'}),
+      F('Rikos tai vihamielinen teko','Malicious or unlawful act',{kind:'choose',v:FI3[v('malicious')]}),
+      F('Ilmoitettu muille viranomaisille?','Reported to other authorities',{kind:'choose',v:otherAuth()}),
+      F('Rajat ylittävät vaikutukset','Cross-border impact in the EU',{kind:'choose',v:FIX[v('cross')]}),
+      F('Lisätiedot','Additional information',{kind:'copy',v:[val('impact')?'Impact so far: '+val('impact'):'',val('mitigation')?'Measures so far: '+val('mitigation'):''].filter(Boolean).join('\n'),opt:true}),
+      F('Liitteet','Attachments',{kind:'hint',v:'Optional.'}));
+  }else{
+    const pr=prevRef(id);
+    rows.push(F('','Note',{kind:'hint',v:'Field names for this report type may differ a little in the form. Match them by meaning.'}),F('','Earlier report',{kind:pr?'copy':'hint',v:pr||'Give the date and reference of your earlier report, if the form asks for it.'}),
+      F('Havaitsemisaika','Detection time',{kind:'copy',v:fiTime(S.aware),src:'Awareness time'}));
+    if(id==='nis2-n')rows.push(F('','Update and description',{kind:'copy',v:desc,k:'desc'}),F('','Severity and impact',{kind:'copy',v:val('impact'),k:'impact'}),
+      F('','Indicators of compromise',{kind:'copy',v:val('ioc'),k:'ioc',opt:true}),F('','Measures so far',{kind:'copy',v:val('mitigation'),k:'mitigation'}),
+      F('Rikos tai vihamielinen teko','Malicious or unlawful act',{kind:'choose',v:FI3[v('malicious')]}),F('Rajat ylittävät vaikutukset','Cross-border impact in the EU',{kind:'choose',v:FIX[v('cross')]}));
+    else if(id==='nis2-f')rows.push(F('','Detailed description, severity and impact',{kind:'copy',v:[desc,val('impact')].filter(Boolean).join('\n'),k:'impact'}),
+      F('','Type of threat or root cause',{kind:'copy',v:val('cause'),k:'cause'}),F('','Applied and ongoing mitigation',{kind:'copy',v:val('mitigation'),k:'mitigation'}),
+      F('Rajat ylittävät vaikutukset','Cross-border impact',{kind:'copy',v:v('cross')==='no'?'None identified.':val('crossb'),k:v('cross')==='no'?null:'crossb'}));
+    else rows.push(F('','Status and impact',{kind:'copy',v:val('impact'),k:'impact'}),F('','Mitigation applied and ongoing',{kind:'copy',v:val('mitigation'),k:'mitigation'}),
+      F('','Root cause so far',{kind:'copy',v:val('cause'),k:'cause',opt:true}));
+    rows.push(F('Lisätiedot','Additional information',{kind:'hint',v:'Optional.'}));
+  }
+  rows.push(F('Ilmoittaja','Reporter',{kind:'choose',v:'Yrityksen puolesta (On behalf of a company)'}));
+  PF.forEach(([k,fi,en])=>rows.push(F(fi,en,{kind:'copy',v:pv(k),pk:k})));
+  rows.push(F('','Support from the NCSC-FI CSIRT',{kind:'hint',v:'Tick the box if you want support from the NCSC-FI CSIRT or want to give it more information.'}));
+  return rows;
+}
+const formText=id=>formFields(id).filter(r=>r.kind!=='hint').map(r=>`${r.fi?r.fi+' ('+r.en+')':r.en}: ${r.v||'-'}`).join('\n');
+let ffVals=[];
+function formListHtml(id){
+  ffVals=[];
+  return `<ul class="flist">${formFields(id).map(r=>{
+    let val2;
+    if(r.kind==='copy'&&r.v){const i=ffVals.push(r.v)-1;val2=`<span class="ff-v" id="ffv_${i}">${esc(r.v)}</span><button type="button" class="linkbtn" data-copy="${i}" aria-label="Copy ${esc(r.en)}">Copy</button>`}
+    else if(r.kind==='copy'&&r.pk)val2=`<span class="ff-in"><label class="sr" for="ffp_${r.pk}">${esc(r.en)}</label><input id="ffp_${r.pk}" data-pk="${r.pk}" placeholder="Add once, saved for all incidents" autocomplete="off"></span>`;
+    else if(r.kind==='copy'&&r.k)val2=`<span class="ff-in"><label class="sr" for="ffk_${r.k}">${esc(r.en)}</label><textarea id="ffk_${r.k}" data-k="${r.k}" data-ff="1" rows="2" placeholder="${r.opt?'Optional. ':''}Not filled in yet"></textarea></span>`;
+    else if(r.kind==='copy')val2=`<span class="ff-v muted">${r.opt?'Optional, nothing yet':'Nothing yet'}</span>`;
+    else if(r.kind==='choose')val2=`<span class="ff-v"><span class="muted">Choose:</span> ${esc(r.v)}</span>`;
+    else val2=`<span class="ff-v muted">${esc(r.v)}</span>`;
+    return `<li class="ff ff-${r.kind}"><span class="ff-l">${r.fi?`<span class="ff-fi" lang="fi">${esc(r.fi)}</span>`:''}<span class="ff-en">${esc(r.en)}${r.src?' · from '+esc(r.src):''}</span></span>${val2}</li>`}).join('')}</ul>`;
+}
 /* Sent time edited after "Mark as sent": the original click time is kept. */
 const editedAt=id=>S.doneClick&&S.doneClick[id]&&S.done[id]&&S.doneClick[id]!==S.done[id]?S.doneClick[id]:null;
 function stepStatus(id){const sent=S.done[id],skip=S.skip[id],miss=missing(id);
-  if(sent)return `${RECORD.includes(id)?'Recorded':'Sent'} ${fmtLog(new Date(sent))}. This is in the decision log.`;
+  if(sent)return `${RECORD.includes(id)?'Recorded':FORMS[id]?'Reported in the official service':'Sent'} ${fmtLog(new Date(sent))}. This is in the decision log.`;
   if(skip)return `Marked as not needed: ${skip}. This is in the decision log.`;
+  if(FORMS[id])return 'Report in the official service, then mark it as done here with the confirmation number.';
   if(NOSEND.includes(id))return 'The MDR clock is already running provisionally. Record the QA decision: is a device on the market affected, and when did the company first get information about it.';
   return miss?`${miss} required item${miss>1?'s':''} missing. Text in [brackets] still needs your input. You can send now and add details later.`:'All required content is there. Check the wording before sending.'}
 function stepHtml(d){
@@ -1397,8 +1511,27 @@ function stepHtml(d){
   const more=extra.length?`<details class="more"><summary>${ic('pen','sm')}Other details in this draft${empty?` (${empty} empty)`:''}</summary><div class="morebody">${extra.map(k=>`<div class="field"><label for="fill_${k}">${esc(FDEF(k).l)}</label>${ctlHtml(k)}</div>`).join('')}</div></details>`:'';
   const ended=(id==='nis2-f'||id==='nis2-p')?`<div class="field datef"><div class="flab"><label for="fill_ended">Date incident handling ended</label>${ib('d-nis2-p','NIS2 progress report')}</div><input type="date" id="fill_ended" data-k="ended" value="${esc(S.ended||'')}"><p class="hint">Sets the final report date. Leave it empty while you are still handling the incident.</p></div>`:'';
   const ed=editedAt(id),snap=S.sentText&&S.sentText[id];
-  const sentBox=sent?`<div class="sentbox"><div class="field"><label for="sent_at">${rec?'Recorded at':'Actual time sent'}</label><input type="datetime-local" id="sent_at" value="${toInput(new Date(sent))}">${ed?`<span class="edited">Time edited, marked at ${esc(fmtLog(new Date(ed)))}</span>`:''}</div>${rec?'':`<div class="field"><label for="sent_ref">Reference or receipt number</label><input id="sent_ref" value="${esc(S.ref[id]||'')}" placeholder="For example the receipt or case number you got back"></div>`}${snap?`<details class="more" style="grid-column:1/-1;margin-top:0"><summary>${ic('file','sm')}Show the text as ${rec?'recorded':'sent'}</summary><pre class="draft">${esc(snap)}</pre></details>`:''}</div>`:'';
+  const fm=FORMS[id];
+  const sentBox=sent?`<div class="sentbox"><div class="field"><label for="sent_at">${rec?'Recorded at':fm?'Time reported':'Actual time sent'}</label><input type="datetime-local" id="sent_at" value="${toInput(new Date(sent))}">${ed?`<span class="edited">Time edited, marked at ${esc(fmtLog(new Date(ed)))}</span>`:''}</div>${rec?'':`<div class="field"><label for="sent_ref">${fm?'Confirmation or reference number':'Reference or receipt number'}</label><input id="sent_ref" value="${esc(S.ref[id]||'')}" placeholder="${fm?'From the Vahvistus (confirmation) page':'For example the receipt or case number you got back'}"></div>`}${snap?`<details class="more" style="grid-column:1/-1;margin-top:0"><summary>${ic('file','sm')}Show the ${fm?'answers as reported':'text as '+(rec?'recorded':'sent')}</summary><pre class="draft">${esc(snap)}</pre></details>`:''}</div>`:'';
   const skipForm=d.opt&&!sent&&!skip?`<form class="skipform" id="skipForm" autocomplete="off" hidden><div class="field"><label for="skip_reason">Why is it not needed?</label><input id="skip_reason" placeholder="Short reason, for example: authority has not asked"></div><button type="submit" class="btn primary">Save</button><button type="button" class="btn" id="skipCancel">Cancel</button></form>`:'';
+  if(fm){
+    const fdest=`Send to <b>${esc(L.to)}</b> through the official NIS2 form. Confirm with Fimea that this is their channel.`;
+    /* Official form step: open the form, copy the answers, mark as done with the confirmation number. */
+    const doneForm=!sent&&!skip?`<form class="doneform" id="doneForm" autocomplete="off" hidden><div class="field"><label for="done_at">Time reported</label><input type="datetime-local" id="done_at"></div><div class="field"><label for="done_ref">Confirmation or reference number</label><input id="done_ref" placeholder="From the Vahvistus (confirmation) page"></div><button type="submit" class="btn primary">Save</button><button type="button" class="btn" id="doneCancel">Cancel</button></form>`:'';
+    const facts=[];if(skip)facts.push(`<button class="btn" id="undoSkip" type="button">${ic('reload','sm')}Undo not needed</button>`);
+    else{if(d.opt&&!sent)facts.push(`<button class="btn" id="skipBtn" type="button">${ic('x','sm')}Not needed</button>`);
+      facts.push(sent?`<button class="btn" id="markSent" type="button">${ic('reload','sm')}Undo done</button>`:`<button class="btn" id="markForm" type="button">${ic('check','sm')}Mark as done</button>`)}
+    return `<div class="st-head"><h3>${esc(T.title)}</h3>${ib('d-'+id,L.short+' '+T.title)}</div>
+    <p class="st-to">${ic('send','sm')}<span>${fdest}${due?' · '+esc(due):''}</span></p>
+    ${sentBox}
+    <div class="formcta"><a class="btn${sent?'':' primary'}" href="${FORM_URL}" target="_blank" rel="noopener">${ic('ext','sm')}Report in the official service</a><p class="hint">Choose: <b lang="fi">${esc(fm)}</b>. The form is in Finnish. Copy the answers below into it, then mark the step as done.</p></div>
+    <div><div class="colh"><span class="eyebrow">What the form asks</span></div><p class="status" id="formStatus" aria-live="polite"></p>${formListHtml(id)}</div>
+    ${ended}
+    <details class="more"><summary>${ic('list','sm')}What the law requires (advice)</summary><p class="hint">The official form guides you. This list is only a check, nothing here blocks the report.</p><ul class="req" id="req">${req}</ul></details>
+    <details class="more"><summary>${ic('pen','sm')}Prepare text first (optional)</summary><p class="hint">If you want to write before you open the form. Copy parts of it into the form.</p><pre class="draft" id="draft">${esc(T.text())}</pre>${more}<div class="navrow" style="margin-top:8px"><button class="btn" id="copyDraft" type="button">${ic('copy','sm')}Copy text</button></div></details>
+    ${skipForm}${doneForm}
+    <div class="st-act"><span class="status" id="draftStatus" aria-live="polite">${esc(stepStatus(id))}</span><span class="actions">${facts.join('')}</span></div>`;
+  }
   const acts=[`<button class="btn" id="copyDraft" type="button">${ic('copy','sm')}Copy draft</button>`];
   if(skip)acts.push(`<button class="btn" id="undoSkip" type="button">${ic('reload','sm')}Undo not needed</button>`);
   else{
@@ -1478,12 +1611,21 @@ function openStep(id){
 function focusFirstRow(){const nx=document.querySelector('#timeline .trow-h');if(nx)nx.focus()}
 function toggleSent(id){
   const lab=stepLab(id),rec=RECORD.includes(id);
-  if(S.done[id]){delete S.done[id];delete S.doneClick[id];delete S.sentText[id];log(`${rec?'Unmarked as recorded':'Unmarked as sent'}: ${lab}`);all();$('#reportMsg').textContent=`${lab} is back on the to-do list.`;const b=$('#markSent');if(b)b.focus();return}
+  if(S.done[id]){delete S.done[id];delete S.doneClick[id];delete S.sentText[id];log(`${rec?'Unmarked as recorded':FORMS[id]?'Unmarked as done':'Unmarked as sent'}: ${lab}`);all();$('#reportMsg').textContent=`${lab} is back on the to-do list.`;const b=$('#markSent');if(b)b.focus();return}
   /* Keep the click time and a snapshot of the exact text, so later edits to the facts do not change what was sent. */
   const t=new Date().toISOString();S.done[id]=t;S.doneClick[id]=t;S.sentText[id]=TPL[id].text();log(`${rec?'Recorded':'Sent'}: ${lab}`);all();
   $('#reportMsg').textContent=`Marked as ${rec?'recorded':'sent'} and logged: ${lab}, ${fmtLog(new Date())}. Correct the time or add a reference below if needed.`;
   const tf=$('#sent_ref')||$('#sent_at');if(tf)tf.focus();
 }
+/* Official form step done: the time reported (default the click time) and the confirmation number. A snapshot of the answers is kept. */
+function markFormDone(id,atVal,def,ref){
+  const now=new Date().toISOString(),changed=atVal&&atVal!==def,t=changed?new Date(atVal):null;
+  if(changed&&isNaN(t)){$('#draftStatus').textContent='Enter a valid time.';return}
+  S.done[id]=t?t.toISOString():now;S.doneClick[id]=now;S.sentText[id]=formText(id);if(ref)S.ref[id]=ref;edited();
+  log(`Reported in the official service: ${stepLab(id)}${t?', reported at '+fmtLog(t):''}${ref?', confirmation '+ref:''}`);all();
+  $('#reportMsg').textContent=`Marked as done and logged: ${stepLab(id)}, ${fmtLog(new Date(S.done[id]))}${ref?', confirmation '+ref:''}.`;
+}
+function renderProfile(){document.querySelectorAll('#profForm [data-pk]').forEach(el=>{if(el!==document.activeElement)el.value=PROFILE[el.dataset.pk]||''})}
 function setSentTime(id,value){
   const d=new Date(value);if(!value||isNaN(d))return;
   if(!S.doneClick[id])S.doneClick[id]=S.done[id];
@@ -1744,6 +1886,10 @@ document.querySelector('.filter').addEventListener('click',e=>{const b=e.target.
 $('#newInc').addEventListener('click',newIncident);
 $('#btnNew').addEventListener('click',newIncident);
 $('#btnExample').addEventListener('click',loadExamples);
+$('#btnProfile').addEventListener('click',()=>{$('#menu').open=false;renderProfile();$('#profileBox').hidden=false;window.scrollTo(0,0);$('#p_org').focus()});
+$('#profClose').addEventListener('click',()=>{$('#profileBox').hidden=true;all();$('#menu summary').focus()});
+$('#profForm').addEventListener('input',e=>{const k=e.target.dataset.pk;if(!k)return;PROFILE[k]=e.target.value;saveProfile()});
+$('#profForm').addEventListener('submit',e=>e.preventDefault());
 ['#openList','#histList'].forEach(s=>$(s).addEventListener('click',e=>{const b=e.target.closest('[data-inc]');if(b)openInc(b.dataset.inc)}));
 $('#copyAll').addEventListener('click',()=>{const txt=JSON.stringify({app:'Incident Clock',exported:new Date().toISOString(),incidents:INC},null,2);$('#allJsonOut').textContent=txt;copy(txt,$('#allJsonOut'),$('#allJsonStatus'))});
 $('#backList').addEventListener('click',openList);
@@ -1779,6 +1925,9 @@ $('#triage').addEventListener('click',e=>{const b=e.target.closest('[data-tgo],[
 /* 3 Report */
 $('#timeline').addEventListener('click',e=>{
   const mh=e.target.closest('.ms-h');if(mh){const dt=mh.parentElement;msOpen[dt.dataset.ms]=!dt.open;return}
+  const cp=e.target.closest('[data-copy]');if(cp){const i=+cp.dataset.copy;copy(ffVals[i],$('#ffv_'+i),$('#formStatus'));return}
+  if(e.target.closest('#markForm')){const f=$('#doneForm'),a=$('#done_at'),v0=toInput(new Date());a.value=v0;a.dataset.def=v0;f.hidden=false;$('#markForm').hidden=true;$('#done_ref').focus();return}
+  if(e.target.closest('#doneCancel')){$('#doneForm').hidden=true;$('#markForm').hidden=false;$('#markForm').focus();return}
   const ed=e.target.closest('[data-edit]');
   if(ed){const w=document.getElementById('wrap_'+ed.dataset.edit);if(w){w.hidden=false;const rv=ed.closest('.rq-v');if(rv)rv.hidden=true;const c=w.querySelector('textarea,input:checked,input');if(c)c.focus()}return}
   if(e.target.closest('#markSent')){if(S.step)toggleSent(S.step);return}
@@ -1790,11 +1939,12 @@ $('#timeline').addEventListener('click',e=>{
   const id=b.dataset.step;S.step=S.step===id?null:id;$('#reportMsg').textContent='';all();
   if(S.step){const r=$('#row_'+id);if(r&&r.getBoundingClientRect().top<70)r.scrollIntoView({block:'start'})}
 });
-$('#timeline').addEventListener('submit',e=>{if(e.target.id!=='skipForm')return;e.preventDefault();
+$('#timeline').addEventListener('submit',e=>{if(e.target.id==='doneForm'){e.preventDefault();const a=$('#done_at');markFormDone(S.step,a.value,a.dataset.def,$('#done_ref').value.trim());return}
+  if(e.target.id!=='skipForm')return;e.preventDefault();
   const x=$('#skip_reason').value.trim();if(!x){$('#draftStatus').textContent='Write a short reason first. It goes in the decision log.';$('#skip_reason').focus();return}
   skipStep(S.step,x)});
-$('#timeline').addEventListener('input',e=>{if(whyInput(e))return;const k=e.target.dataset.k;if(!k)return;S[k]=e.target.value;edited();if(!TIMED[k])refreshStep();save()});
-$('#timeline').addEventListener('change',e=>{const t=e.target;if(whyChange(e))return;
+$('#timeline').addEventListener('input',e=>{if(whyInput(e))return;if(e.target.dataset.pk){PROFILE[e.target.dataset.pk]=e.target.value;saveProfile();return}const k=e.target.dataset.k;if(!k)return;S[k]=e.target.value;edited();if(!TIMED[k])refreshStep();save()});
+$('#timeline').addEventListener('change',e=>{const t=e.target;if(whyChange(e))return;if(t.dataset.pk||t.dataset.ff){all();return}
   if(t.dataset.k&&TIMED[t.dataset.k]){log(`${TIMED[t.dataset.k]} set to ${t.value.replace('T',' ')||'(empty)'}`);all();return}
   if(t.dataset.a){const id=t.dataset.a;S.a[id]=t.value;const q=Q.find(x=>x.id===id);log(`${q.k}: ${ANS[t.value]}`);edited();all()}});
 /* Actual sent time and reference: saved when the field is left or Enter is pressed. */
