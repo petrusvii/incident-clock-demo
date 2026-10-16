@@ -241,7 +241,7 @@ pre.draft{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--
 .st-act{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .st-act .actions{margin-left:auto}
 #reportMsg{margin:0}
-#reportMsg:empty{display:none}
+#reportMsg:empty,#listMsg:empty{display:none}
 
 /* close */
 .cblock{display:flex;flex-direction:column;gap:8px}
@@ -358,18 +358,45 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
 .skipform{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
 .skipform .field{flex:1 1 240px}
 .skipform input{background:var(--surface)}
-.arow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:6px 8px;font-size:13.5px}
-.arow .aname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.arow .when{font-size:12px;color:var(--muted);white-space:nowrap}
 .dtf{max-width:280px}
 @media (max-width:700px){pre.draft,.log{max-height:none;overflow:visible}}
-@media (max-width:480px){.arow{grid-template-columns:minmax(0,1fr) auto}.arow .when{grid-column:1;grid-row:2}}
+/* incidents list, back link, closed banner, close and delete */
+.lsec{display:flex;flex-direction:column;gap:10px}
+.lsec+.lsec{border-top:1px solid var(--line);padding-top:18px}
+.lhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.lhead h2,.lsec>h2{font-size:17px;display:flex;align-items:center;gap:8px}
+.lhead .n,.lsec>h2 .n{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--muted)}
+.ilist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.icard{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 14px;border-left:4px solid var(--line)}
+.icard:hover{border-color:var(--accent)}
+.icard.warn{border-left-color:var(--warn)}
+.icard.over{border-left-color:var(--crit)}
+.icard.hist{background:transparent;border-left-color:var(--line)}
+.ic-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ic-name{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ic-sub{font-size:12.5px;color:var(--muted)}
+.ic-side{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right;min-width:0}
+.ic-side .count{font-size:17px}
+.ic-what{font-size:12.5px;display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.ic-n{font-size:12px;color:var(--muted)}
+.ic-n.over{color:var(--crit);font-weight:600}
+.ic-res{font-size:13px}
+.backlink{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--accent);font-weight:600;font-size:13.5px;padding:8px 4px;min-height:40px;border-radius:6px}
+.backlink:hover{background:var(--accent-soft)}
+.closedbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;background:var(--idle-bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13.5px}
+.confirm.danger{background:var(--crit-bg);border-color:color-mix(in srgb,var(--crit) 35%,transparent)}
+.confirm .field{flex:1 1 260px}
+.btn.danger{background:var(--crit);border-color:var(--crit);color:var(--surface);font-weight:600}
+.quiet{border:0;background:transparent;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:8px 4px;min-height:40px;border-radius:6px}
+.quiet:hover{color:var(--crit)}
+.filter button:disabled{opacity:.5;cursor:not-allowed}
+@media (max-width:520px){.icard{grid-template-columns:minmax(0,1fr)}.ic-side{align-items:flex-start;text-align:left}.ic-what{justify-content:flex-start}}
 @media (prefers-reduced-motion:no-preference){
   .drawer{animation:slide .18s ease-out}
   @keyframes slide{from{transform:translateX(24px)}to{transform:none}}
   .tstep,.phase.cur .ph-body{animation:fadein .16s ease-out}
   @keyframes fadein{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
-  .btn,.trow-h,.ph-btn,.linkrow,.chev{transition:background-color .15s,border-color .15s,transform .15s}
+  .btn,.trow-h,.ph-btn,.linkrow,.icard,.chev{transition:background-color .15s,border-color .15s,transform .15s}
 }
 @media (max-width:760px){
   .sgrid,.lawcard{grid-template-columns:minmax(0,1fr)}
@@ -421,11 +448,11 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
       <div class="mark" aria-hidden="true"><svg class="i"><use href="#i-clock"/></svg></div>
       <div>
         <h1>Incident Clock <span class="tag">Demo</span></h1>
-        <p>NIS2, GDPR, MDR and CRA deadlines for one incident.</p>
+        <p>NIS2, GDPR, MDR and CRA deadlines for every incident.</p>
       </div>
     </div>
     <nav class="nav" role="tablist" aria-label="Views">
-      <button type="button" role="tab" id="navIncident" aria-selected="true" data-view="incident">Incident <span class="count-badge" id="navBadge"></span></button>
+      <button type="button" role="tab" id="navList" aria-selected="true" data-view="list">Incidents <span class="count-badge" id="navBadge" hidden></span></button>
       <button type="button" role="tab" id="navRules" aria-selected="false" data-view="rulebook"><svg class="i sm"><use href="#i-book"/></svg>Rulebook</button>
     </nav>
     <details class="menu" id="menu">
@@ -437,17 +464,38 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
     </details>
   </header>
 
-  <div class="confirm" id="confirmBar" role="alertdialog" aria-labelledby="cfText" aria-describedby="cfHint" hidden>
-    <div><p id="cfText"><b>This replaces the current incident and its decision log.</b></p><p class="hint" id="cfHint">The current incident is kept under Earlier incidents in Close.</p></div>
-    <div class="actions"><button class="btn primary" id="cfYes" type="button">Replace</button><button class="btn" id="cfNo" type="button">Cancel</button></div>
+  <div id="viewList" class="view">
+    <section class="lsec" aria-labelledby="openListH">
+      <div class="lhead"><h2 id="openListH">Open incidents <span class="n" id="openN"></span></h2><button class="btn primary" id="newInc" type="button"><svg class="i sm"><use href="#i-plus"/></svg>New incident</button></div>
+      <p class="status" id="listMsg" aria-live="polite"></p>
+      <p class="hint" id="nextAll" hidden></p>
+      <ul class="ilist" id="openList"></ul>
+    </section>
+    <section class="lsec" aria-labelledby="histH">
+      <h2 id="histH">History <span class="n" id="histN"></span></h2>
+      <p class="hint">Closed incidents, newest first. Open one to see its compliance summary and decision log.</p>
+      <ul class="ilist" id="histList"></ul>
+    </section>
+    <section class="lsec" aria-labelledby="allDataH">
+      <h2 id="allDataH" class="sr">All data</h2>
+      <p class="hint">Everything is stored in this browser only. Copy all incidents as JSON to keep your own backup.</p>
+      <div class="navrow"><span class="status" id="allJsonStatus" aria-live="polite"></span><button class="btn" id="copyAll" type="button"><svg class="i sm"><use href="#i-copy"/></svg>Copy all incidents (JSON)</button></div>
+      <pre class="draft" id="allJsonOut" hidden></pre>
+    </section>
   </div>
 
-  <div id="viewIncident" class="view">
+  <div id="viewIncident" class="view" hidden>
+    <button type="button" class="backlink" id="backList"><svg class="i sm"><use href="#i-arrow-left"/></svg>All incidents</button>
     <div class="bar" id="bar">
       <div class="bar-inc"><div class="bar-name" id="barName"></div><div class="bar-aware" id="barAware"></div></div>
       <button type="button" class="bar-next" id="barNext"></button>
     </div>
-    <p class="example-note" id="exampleNote" hidden><svg class="i sm"><use href="#i-info"/></svg>This is an example incident with made-up details. Choose More, then New incident, to start a blank one.</p>
+    <div class="closedbar" id="closedBar" hidden><span id="closedText"></span><button class="btn" id="reopenBtn" type="button"><svg class="i sm"><use href="#i-reload"/></svg>Reopen</button></div>
+            <div class="confirm danger" id="delConfirm" role="alertdialog" aria-labelledby="delCfText" hidden>
+              <p id="delCfText"><b>Delete this incident for good?</b> This removes its facts, reports, compliance summary and decision log from this browser. The evidence cannot be recovered. Copy the incident data first if you may need it.</p>
+              <div class="actions"><button class="btn danger" id="delYes" type="button">Delete for good</button><button class="btn" id="delNo" type="button">Cancel</button></div>
+            </div>
+    <p class="example-note" id="exampleNote" hidden><svg class="i sm"><use href="#i-info"/></svg>This is an example incident with made-up details. Use New incident on the Incidents list to start your own.</p>
 
     <ol class="phases" id="phases">
       <li class="phase" id="ph1">
@@ -459,7 +507,7 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
             <div class="field s2"><label for="f_org">Organisation</label><input id="f_org" data-k="org"></div>
             <div class="field s2"><div class="flab"><label for="f_aware">When did you become aware?</label><button type="button" class="ib" data-help="aware" aria-label="Help: when the clock starts"><svg class="i"><use href="#i-info"/></svg></button></div><input id="f_aware" type="datetime-local" data-k="aware"><p class="hint">All deadlines count from this time.</p></div>
             <div class="field s4"><label for="f_desc">What happened</label><textarea id="f_desc" data-k="desc" rows="4"></textarea></div>
-            <div class="navrow s6"><span class="status" id="startMsg" aria-live="polite"></span><button type="submit" class="btn primary" id="startNext"></button></div>
+            <div class="navrow s6"><button class="quiet" id="delAsk2" type="button">Delete incident</button><span class="status" id="startMsg" aria-live="polite"></span><button type="submit" class="btn primary" id="startNext"></button></div>
           </form>
         </div>
       </li>
@@ -524,10 +572,15 @@ blockquote.legal mark{background:var(--mark);color:inherit;padding:0 2px;border-
             <div class="navrow"><span class="status" id="jsonStatus" aria-live="polite"></span><button class="btn" id="copyJson" type="button"><svg class="i sm"><use href="#i-copy"/></svg>Copy incident data (JSON)</button></div>
             <pre class="draft" id="jsonOut" hidden></pre>
           </section>
-          <section class="cblock" id="archBlock" aria-labelledby="archH" hidden>
-            <h3 id="archH">Earlier incidents</h3>
-            <p class="hint">Kept in this browser when you start a new incident or load the example. The last 10 are kept.</p>
-            <ul class="olist" id="archList"></ul>
+          <section class="cblock" aria-labelledby="closeIncH">
+            <h3 id="closeIncH">Close the incident</h3>
+            <p class="hint" id="closeHint"></p>
+            <div class="confirm" id="closeConfirm" role="alertdialog" aria-labelledby="closeCfText" hidden>
+              <p id="closeCfText"></p>
+              <div class="field"><label for="closeReason">Why do you close it now?</label><input id="closeReason" placeholder="Short reason, for example: remaining reports handled by QA" autocomplete="off"></div>
+              <div class="actions"><button class="btn primary" id="closeYes" type="button">Close incident</button><button class="btn" id="closeNo" type="button">Cancel</button></div>
+            </div>
+            <div class="navrow"><button class="quiet" id="delAsk" type="button">Delete incident</button><button class="btn" id="closeBtn" type="button"><svg class="i sm"><use href="#i-check"/></svg>Close incident</button></div>
           </section>
         </div>
       </li>
@@ -916,12 +969,18 @@ const fmt=d=>d.toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'shor
 const fmtLog=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 function addMonth(d){const x=new Date(d),day=x.getDate();x.setMonth(x.getMonth()+1);if(x.getDate()<day)x.setDate(0);return x}
 
-/* State v5: incident facts, answers (a), sent times (done), references (ref), steps marked not needed (skip, with reason), MDR awareness time, plus the flow: phase (open phase 1-4), reached (furthest phase unlocked), tg (open triage group), step (open report step). */
+/* State v6: one object per incident. Facts, answers (a), sent times (done), references (ref), steps marked not needed (skip, with reason), MDR awareness time,
+   owner and sign-off, plus id, createdAt, status ('open' or 'closed'), closedAt, closeNote, exKey (which example it is, if any) and the flow:
+   phase (open phase 1-4), reached (furthest phase unlocked), tg (open triage group), step (open report step).
+   All incidents live in one list (IKEY); SELKEY remembers the incident that was open. */
+const IKEY='incident-clock-incidents',SELKEY='incident-clock-selected',AKEY='incident-clock-archive';
 const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const iso=s=>new Date(s).toISOString();
 function example(){
   const a=new Date(Date.now()-5*H-17*60e3);a.setSeconds(0,0);
   const t=m=>new Date(a.getTime()+m*60e3).toISOString();
-  return {v:5,id:newId(),example:true,name:'Ransomware on production file server',org:'Example Medtech Oy',aware:toInput(a),
+  return {v:6,id:newId(),exKey:'ransomware',example:true,createdAt:a.toISOString(),status:'open',closedAt:null,closeNote:'',
+    name:'Ransomware on production file server',org:'Example Medtech Oy',aware:toInput(a),
     desc:'Files on the production file server were encrypted at 06:40. Ransom note found on the server. Server isolated from the network, backups are being checked.',
     systems:'Production file server, label printing share',people:'About 120 employees (HR folder on the share)',
     contact:'Example Person, IT Manager, +358 40 000 0000',owner:'Example Person, IT Manager',impact:'Label printing at the Tampere site stopped for about 6 hours. No customer systems affected so far.',
@@ -932,25 +991,57 @@ function example(){
     done:{},ref:{},skip:{},phase:3,reached:3,tg:null,step:'nis2-ew',
     log:[{t:t(0),x:'Incident detected by EDR alert, server isolated'},{t:t(35),x:'Incident opened, awareness time set'},{t:t(50),x:'In NIS2 scope: Yes'},{t:t(52),x:'Severe disruption: Yes'},{t:t(53),x:'Malicious act suspected: Yes'},{t:t(70),x:'Personal data affected: Yes (HR folder on the share)'},{t:t(95),x:'Device on market affected: Unsure, QA asked to check production records'}]};
 }
-function blank(){const n=new Date();n.setSeconds(0,0);return {v:5,id:newId(),example:false,name:'',org:'',aware:toInput(n),desc:'',systems:'',people:'',mdrAware:'',a:{severity:'unknown'},done:{},ref:{},skip:{},phase:1,reached:1,tg:null,step:null,log:[{t:n.toISOString(),x:'New incident opened'}]}}
-function migrate(x){
-  if(!x||!x.a)return null;
-  if(x.v===4){x.v=5;x.id=x.id||newId();x.ref=x.ref||{};x.skip=x.skip||{};x.mdrAware=x.mdrAware||''}
-  return x.v===5?x:null;
+/* A closed example for History: lost encrypted laptop, GDPR breach with unlikely risk, so only the internal breach register entry. */
+function exampleClosed(){
+  const L=(d,x)=>({t:iso(d),x});
+  return {v:6,id:newId(),exKey:'laptop',example:true,createdAt:iso('2026-09-03T09:20'),status:'closed',closedAt:iso('2026-09-05T10:20'),closeNote:'',
+    name:'Lost laptop with customer contact data',org:'Example Medtech Oy',aware:'2026-09-03T09:15',
+    desc:'A sales employee lost a company laptop on a train in the morning. The disk is encrypted with BitLocker (TPM and PIN). The laptop held a local export of customer contact data: names, work emails and phone numbers.',
+    systems:'One company laptop (sales), local CRM export file',people:'About 350 customer contact persons, work contact details only',
+    contact:'Example Person, IT Manager, +358 40 000 0000',owner:'Example Person, IT Manager',
+    consequences:'Unlikely. The disk is encrypted and the PIN was not kept with the laptop. No special categories of data.',
+    mitigation:'Device locked and wipe command sent through Intune at 09:40, user password reset, CRM sessions revoked, police report filed.',
+    impact:'',ioc:'',cause:'Lost device',crossb:'',advice:'',dpo:'Example DPO, dpo@example.com',devices:'',patient:'',conclusion:'',product:'',states:'',fixdate:'',ended:'2026-09-04',mdrAware:'',
+    a:{nis2:'yes',pde:'no',disrupt:'no',harm:'no',malicious:'no',cross:'no',pd:'yes',controller:'yes',risk:'no',highrisk:'no',device:'no',severity:'unknown',exploited:'no',severe:'no'},
+    done:{'gdpr-r':iso('2026-09-03T15:30')},ref:{},skip:{},phase:4,reached:4,tg:null,step:null,
+    signName:'Example Director, Quality Director',signAt:iso('2026-09-05T10:05'),
+    log:[L('2026-09-03T09:15','Employee reported the laptop lost on the train'),L('2026-09-03T09:20','Clock started. Became aware 2026-09-03 09:15'),
+      L('2026-09-03T09:30','In NIS2 scope: Yes'),L('2026-09-03T09:40','Device locked and wipe command sent through Intune'),
+      L('2026-09-03T09:45','Severe disruption: No'),L('2026-09-03T09:46','Damage to others: No'),L('2026-09-03T09:47','Malicious act suspected: No'),L('2026-09-03T09:48','Cross-border impact: No'),
+      L('2026-09-03T09:50','Personal data affected: Yes'),L('2026-09-03T09:52','Controller of the data: Yes'),
+      L('2026-09-03T10:10','Risk to people: No'),L('2026-09-03T10:11','High risk to people: No'),L('2026-09-03T10:15','Device on market affected: No'),
+      L('2026-09-03T10:20','Decision with the DPO: no notification to the Data Protection Ombudsman, risk unlikely because of BitLocker encryption (Art. 33(1)). Decided by Example Person.'),
+      L('2026-09-03T15:30','Recorded: GDPR: Internal breach register entry'),
+      L('2026-09-04T11:00','Intune confirms the laptop was wiped at its last check-in'),L('2026-09-04T11:05','Handling ended date set to 2026-09-04'),
+      L('2026-09-05T10:00','Incident owner: Example Person, IT Manager'),L('2026-09-05T10:05','Management sign-off by Example Director, Quality Director'),
+      L('2026-09-05T10:20','Incident closed')]};
 }
-
-let S, view='incident', flt='all';
-try{S=migrate(JSON.parse(localStorage.getItem(KEY)))}catch(e){S=null}
-if(!S)S=example();
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const EXAMPLES={ransomware:example,laptop:exampleClosed};
+function blank(){const n=new Date();n.setSeconds(0,0);return {v:6,id:newId(),example:false,createdAt:n.toISOString(),status:'open',closedAt:null,closeNote:'',name:'',org:'',aware:toInput(n),desc:'',systems:'',people:'',mdrAware:'',a:{severity:'unknown'},done:{},ref:{},skip:{},phase:1,reached:1,tg:null,step:null,log:[{t:n.toISOString(),x:'New incident opened'}]}}
+/* Bring any saved incident up to v6. v4 and v5 were single-incident states. */
+function migrate(x){
+  if(!x||typeof x!=='object'||!x.a)return null;
+  if(x.v===4){x.v=5;x.ref=x.ref||{};x.skip=x.skip||{};x.mdrAware=x.mdrAware||''}
+  if(x.v===5){x.v=6;x.id=x.id||newId();
+    x.createdAt=x.createdAt||(x.log&&x.log[0]&&x.log[0].t)||new Date().toISOString();
+    x.status=x.signAt?'closed':'open';x.closedAt=x.signAt||null;x.closeNote='';
+    if(x.example&&!x.exKey&&/^Ransomware on production file server$/.test(x.name||''))x.exKey='ransomware'}
+  if(x.v!==6)return null;
+  x.done=x.done||{};x.ref=x.ref||{};x.skip=x.skip||{};x.log=x.log||[];x.status=x.status==='closed'?'closed':'open';
+  return x;
+}
+let INC=null,S=null,view='list',flt='all';
+try{const x=JSON.parse(localStorage.getItem(IKEY));if(Array.isArray(x))INC=x.map(migrate).filter(Boolean)}catch(e){INC=null}
+if(!INC){
+  /* First run of v6: move the old single incident and every archived one into the list. Old keys are left as they were. */
+  INC=[];const add=x=>{const m=migrate(x);if(m&&!INC.some(i=>i.id===m.id))INC.push(m)};
+  try{add(JSON.parse(localStorage.getItem(KEY)))}catch(e){}
+  try{const ar=JSON.parse(localStorage.getItem(AKEY));if(Array.isArray(ar))ar.forEach(e=>add(e&&e.data))}catch(e){}
+  if(!INC.length)INC=[example(),exampleClosed()];
+}
+function save(){try{localStorage.setItem(IKEY,JSON.stringify(INC));localStorage.setItem(SELKEY,S?S.id:'')}catch(e){}}
 function log(x){S.log.push({t:new Date().toISOString(),x});}
-
-/* Archive of earlier incidents (last 10), so New incident / Load example never lose data. */
-const AKEY='incident-clock-archive';
-let ARCH=[];
-try{const x=JSON.parse(localStorage.getItem(AKEY));if(Array.isArray(x))ARCH=x}catch(e){}
-function saveArch(){try{localStorage.setItem(AKEY,JSON.stringify(ARCH))}catch(e){}}
-function archive(x){if(!x||x.example)return;ARCH=ARCH.filter(e=>e.data&&e.data.id!==x.id);ARCH.unshift({saved:new Date().toISOString(),data:JSON.parse(JSON.stringify(x))});ARCH=ARCH.slice(0,10);saveArch()}
+const withS=(x,fn)=>{const o=S;S=x;try{return fn()}finally{S=o}};
 
 const v=id=>S.a[id]||'unsure';
 function tri(...ids){const vals=ids.map(v);return vals.includes('yes')?'yes':vals.includes('unsure')?'unsure':'no'}
@@ -1053,7 +1144,7 @@ let lastSig='',sentOpen=false;
 const lawTag=k=>`<span class="lc-${k}"><span class="lawtag">${esc(LAWS[k].short)}</span></span>`;
 function triageStats(){let n=0,ans=0,uns=0;visGroups().forEach(g=>g.qs.forEach(q=>{if(!shownQ(q)||q.type==='time')return;n++;const a=S.a[q.id];
   if(q.type==='select'){if(a&&a!=='unknown')ans++;else uns++}else{if(a)ans++;if(v(q.id)==='unsure')uns++}}));return {n,ans,uns}}
-function edited(){if(S.example){S.example=false;$('#exampleNote').hidden=true}}
+function edited(){if(S.example)S.example=false}
 
 /* ---------- Sticky bar ---------- */
 function renderBar(R){
@@ -1062,9 +1153,10 @@ function renderBar(R){
   const p=pending(R),nx=$('#barNext');
   /* Before triage is finished every unanswered question counts as Unsure, so every law looks possible.
      Then show only the earliest possible deadline, not a count that looks decided. */
-  const triaged=S.reached>=3,nb=$('#navBadge');
-  nb.textContent=triaged&&p.length?p.length+(p.length>1?' deadlines':' deadline'):'';nb.hidden=!(triaged&&p.length);
-  nb.title=triaged&&p.length?`${p.length} report${p.length>1?'s':''} with a deadline still to send for this incident`:'';
+  const triaged=S.reached>=3;
+  $('#closedBar').hidden=S.status!=='closed';
+  if(S.status==='closed'){$('#closedText').textContent=`Closed on ${fmtLog(new Date(S.closedAt))}. It is in History. No deadlines are counted for it.`;
+    nx.disabled=true;nx.dataset.open='';nx.innerHTML=`<span class="bn-lab">Status</span><span class="bn-what">Closed</span>`;return}
   if(!triaged&&p.length){const n=p[0];nx.disabled=true;nx.dataset.open='';
     nx.innerHTML=`<span class="bn-lab">Earliest possible deadline</span><span class="count bn-count" data-due="${n.at.getTime()}" data-id="${n.id}">--</span><span class="bn-what">Finish triage to see which apply</span>`;return}
   if(!p.length){nx.disabled=true;nx.dataset.open='';nx.innerHTML=`<span class="bn-lab">Next deadline</span><span class="bn-what">No open deadlines</span>`;return}
@@ -1103,7 +1195,7 @@ function openPhase(p){
 function renderStart(force){
   document.querySelectorAll('#startForm [data-k]').forEach(el=>{if(force||el!==document.activeElement)el.value=S[el.dataset.k]||''});
   $('#startNext').innerHTML=S.reached<2?`${ic('clock','sm')}Start the clock`:`Continue${ic('arrow-right','sm')}`;
-  $('#exampleNote').hidden=!S.example;
+  $('#exampleNote').hidden=!S.exKey;
 }
 function startNext(){
   if(isNaN(new Date(S.aware))){$('#startMsg').textContent='Enter the time you became aware. All deadlines count from it.';$('#f_aware').focus();return}
@@ -1246,7 +1338,7 @@ function renderClose(R){
   $('#closeOpen').innerHTML=(early.length?`<li><button type="button" class="linkrow" data-goto-step="${early[0].id}">${ic('alert','sm')}<span>${early.length} first report${early.length>1?'s are':' is'} not done yet</span><span class="when">Open in Report</span></button></li>`:'')
     +(open.length?open.map(d=>`<li><button type="button" class="linkrow" data-goto-step="${d.id}">${lawTag(d.law)}<span>${esc(d.l)}</span><span class="when">${d.at?dueS(d):esc(d.when||'Without delay')}</span></button></li>`).join('')
     :`<li class="empty">${ic('check','sm')}All final reports and records are done.</li>`);
-  renderComp(R);renderLog();renderArch();
+  renderComp(R);renderLog();renderCloseInc(R);
 }
 
 /* ---------- Compliance summary ---------- */
@@ -1287,9 +1379,72 @@ function renderLog(){
   const items=[...S.log].reverse();
   $('#log').innerHTML=items.length?items.map(e=>`<li><time>${fmtLog(new Date(e.t))}</time><span>${esc(e.x)}</span></li>`).join(''):'<li>No entries yet.</li>';
 }
-function renderArch(){
-  $('#archBlock').hidden=!ARCH.length;
-  $('#archList').innerHTML=ARCH.map((e,i)=>{const d=e.data||{},aw=new Date(d.aware);return `<li class="arow"><span class="aname">${esc(d.name||'Unnamed incident')}</span><span class="when">${isNaN(aw)?'':'aware '+esc(fmt(aw))}</span><button type="button" class="btn" data-arch="${i}" aria-label="Open ${esc(d.name||'unnamed incident')}">Open</button></li>`}).join('');
+/* ---------- Close, reopen, delete ---------- */
+const openDuties=R=>duties(R).filter(x=>x.res==='open'||x.res==='over').length;
+const dutyN=n=>`${n} dut${n>1?'ies are':'y is'}`;
+function renderCloseInc(R){
+  const n=openDuties(R),isClosed=S.status==='closed',b=$('#closeBtn');
+  b.hidden=isClosed;b.classList.toggle('primary',!!S.signAt&&!isClosed);
+  $('#closeHint').textContent=isClosed?`Closed on ${fmtLog(new Date(S.closedAt))}${S.closeNote?'. Reason given: '+S.closeNote:''}. Use Reopen at the top to work on it again.`
+    :n?`${dutyN(n)} still open. You can close the incident anyway, but you must give a reason. It goes in the decision log.`
+    :S.signAt?'All duties are closed and signed off. Closing moves the incident to History. You can reopen it later.'
+    :'All duties are closed. Sign off above, then close. Closing moves the incident to History.';
+}
+function askClose(){
+  const n=openDuties(evaluate());$('#delConfirm').hidden=true;
+  if(!n){closeInc('');return}
+  $('#closeCfText').innerHTML=`<b>${dutyN(n)} still open.</b> Closing does not send anything. Write a short reason. It is saved with the incident and logged.`;
+  $('#closeReason').value='';$('#closeConfirm').hidden=false;$('#closeReason').focus();
+}
+function closeInc(note){
+  const n=openDuties(evaluate());
+  S.status='closed';S.closedAt=new Date().toISOString();S.closeNote=note;S.step=null;edited();
+  log('Incident closed'+(note?`. ${n} dut${n>1?'ies':'y'} still open. Reason: ${note}`:''));
+  $('#closeConfirm').hidden=true;all();window.scrollTo(0,0);$('#reopenBtn').focus({preventScroll:true});
+}
+function reopenInc(){S.status='open';S.closedAt=null;S.closeNote='';edited();log('Incident reopened');all();$('#closeBtn').focus({preventScroll:true})}
+function deleteInc(){const name=S.name||'Unnamed incident';INC=INC.filter(x=>x!==S);openList();$('#listMsg').textContent=`Deleted: ${name}.`}
+
+/* ---------- Incidents list ---------- */
+const PHN=[null,'Start','Triage','Report','Close'];
+const awLine=x=>{const d=new Date(x.aware);return isNaN(d)?'Awareness time not set':'Became aware '+fmt(d)};
+const exTag=x=>x.exKey?'<span class="tag">Example</span>':'';
+function incInfo(x){return withS(x,()=>{const p=pending(evaluate()),now=Date.now();return {p,triaged:x.reached>=3,next:p[0]||null,over:p.filter(d=>d.at<now).length}})}
+function compRes(x){return withS(x,()=>{const rows=duties(evaluate()),c=k=>rows.filter(r=>r.res===k).length,o=c('open');return `${c('ok')} met, ${c('late')+c('over')} late`+(o?`, ${o} open`:'')+`, ${c('nr')} not required`})}
+function renderNavBadge(){
+  const n=INC.filter(x=>x.status!=='closed').length,nb=$('#navBadge');
+  nb.textContent=n?String(n):'';nb.hidden=!n;nb.title=n?`${n} open incident${n>1?'s':''}`:'';
+}
+let listAt=0;
+function renderList(){
+  listAt=Date.now();const now=listAt;
+  const open=INC.filter(x=>x.status!=='closed').map(x=>({x,i:incInfo(x)})).sort((a,b)=>(a.i.next?a.i.next.at.getTime():Infinity)-(b.i.next?b.i.next.at.getTime():Infinity)||0);
+  const hist=INC.filter(x=>x.status==='closed').sort((a,b)=>new Date(b.closedAt)-new Date(a.closedAt));
+  $('#openN').textContent=open.length?`(${open.length})`:'';$('#histN').textContent=hist.length?`(${hist.length})`:'';
+  $('#openList').innerHTML=open.length?open.map(({x,i})=>{
+    const n=i.next,st=!n?'':n.at<now?'over':n.at-now<24*H?'warn':'';let side;
+    if(!n)side=`<span class="bn-lab">Next deadline</span><span class="ic-what">No open deadlines</span>`;
+    else if(!i.triaged)side=`<span class="bn-lab">Earliest possible deadline</span><span class="count" data-due="${n.at.getTime()}">--</span><span class="ic-what">Finish triage to see which apply</span>`;
+    else side=`<span class="bn-lab">Next deadline</span><span class="count" data-due="${n.at.getTime()}">--</span><span class="ic-what">${lawTag(n.law)} ${esc(n.l)}</span><span class="ic-n${i.over?' over':''}">${i.p.length} open deadline${i.p.length>1?'s':''}${i.over?`, ${i.over} overdue`:''}</span>`;
+    return `<li><button type="button" class="icard ${st}" data-inc="${x.id}"><span class="ic-main"><span class="ic-name">${esc(x.name||'Unnamed incident')}${exTag(x)}</span><span class="ic-sub">${esc(awLine(x))} · Phase: ${PHN[x.phase]||'Start'}</span></span><span class="ic-side">${side}</span></button></li>`}).join('')
+    :`<li class="empty">No open incidents. Use New incident when something happens.</li>`;
+  const tri=open.filter(o=>o.i.triaged&&o.i.next),na=$('#nextAll');
+  na.hidden=!(open.length>1&&tri.length);
+  if(!na.hidden){const t=tri[0],n=t.i.next;na.innerHTML=`Next deadline across all incidents: <b>${esc(t.x.name||'Unnamed incident')}</b>, ${esc(LAWS[n.law].short)} ${esc(n.l)}, <span class="count" data-due="${n.at.getTime()}">--</span>`}
+  $('#histList').innerHTML=hist.length?hist.map(x=>`<li><button type="button" class="icard hist" data-inc="${x.id}"><span class="ic-main"><span class="ic-name">${esc(x.name||'Unnamed incident')}${exTag(x)}</span><span class="ic-sub">${esc(awLine(x))} · Closed ${esc(fmtLog(new Date(x.closedAt)))}</span></span><span class="ic-side"><span class="ic-res">${esc(compRes(x))}</span><span class="ic-n">${x.signAt?'Signed off by '+esc(x.signName):'Not signed off'}</span></span></button></li>`).join('')
+    :`<li class="empty">No closed incidents yet.</li>`;
+}
+function openList(){S=null;sentOpen=false;setView('list');all();window.scrollTo(0,0)}
+function openInc(id){
+  const x=INC.find(i=>i.id===id);if(!x)return;
+  S=x;sentOpen=false;$('#reportMsg').textContent='';$('#listMsg').textContent='';['#closeConfirm','#delConfirm'].forEach(s=>$(s).hidden=true);
+  setView('incident');renderStart(true);all();window.scrollTo(0,0);$('#backList').focus({preventScroll:true});
+}
+function newIncident(){$('#menu').open=false;const x=blank();INC.unshift(x);openInc(x.id);$('#f_name').focus()}
+function loadExamples(){
+  $('#menu').open=false;
+  const miss=Object.keys(EXAMPLES).filter(k=>!INC.some(x=>x.exKey===k));miss.forEach(k=>INC.push(EXAMPLES[k]()));
+  openList();$('#listMsg').textContent=miss.length?`Added ${miss.length} example incident${miss.length>1?'s':''}.`:'The example incidents are already in the list.';
 }
 
 /* ---------- Clocks ---------- */
@@ -1302,11 +1457,12 @@ function left(ms){
 function tick(){
   const now=Date.now();
   document.querySelectorAll('[data-due]').forEach(el=>{
-    const ms=+el.dataset.due-now,id=el.dataset.id,done=id&&closed(id);
+    const ms=+el.dataset.due-now,id=el.dataset.id,done=id&&S&&closed(id);
     el.dataset.st=done?'ok':ms<6*H?'crit':ms<24*H?'warn':'idle';
     el.textContent=done?'Done':left(ms);
   });
-  if(sig(evaluate(),now)!==lastSig){const a=document.activeElement;if(!(a&&a.closest&&a.closest('#timeline')&&/^(TEXTAREA|INPUT)$/.test(a.tagName)&&a.type!=='radio'))all()}
+  if(view==='list'&&now-listAt>30000){renderList();tick();return}
+  if(S&&view==='incident'&&sig(evaluate(),now)!==lastSig){const a=document.activeElement;if(!(a&&a.closest&&a.closest('#timeline')&&/^(TEXTAREA|INPUT)$/.test(a.tagName)&&a.type!=='radio'))all()}
 }
 
 /* ---------- Legal quote rendering ---------- */
@@ -1339,23 +1495,27 @@ const SOON=[
  {icon:'pulse',t:'MDCG guidance on vigilance terms (MDCG 2023-3)',d:'Questions and answers on MDR vigilance terms and timelines. Guidance, not law.',url:'https://health.ec.europa.eu/medical-devices-sector/new-regulations/guidance-mdcg-endorsed-documents-and-other-guidance_en'}
 ];
 function renderRules(){
-  const R=evaluate();const st={};R.forEach(r=>st[r.key]=r.st);st.fi=st.nis2;
+  /* Status pills and the filter need an open incident; on the list they are left out. */
+  const R=S?evaluate():[];const st={};R.forEach(r=>st[r.key]=r.st);st.fi=st.nis2;
+  const fa=$('#fltActive');fa.disabled=!S;fa.title=S?'':'Open an incident to use this filter';if(!S&&flt!=='all'){flt='all';document.querySelectorAll('.filter button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.flt==='all'))}
   const order=['nis2','fi','gdpr','mdr','cra'];
   const used={};Object.entries(REF).forEach(([k,r])=>{(used[r.law]=used[r.law]||[]).push(k)});
   const shown=order.filter(k=>flt==='all'||(st[k]==='applies'||st[k]==='assess'));
   $('#laws').innerHTML=shown.length?shown.map(k=>{
     const L=LAWS[k],s=st[k];
-    return `<article class="lawcard lc-${k}"><div class="meta"><div class="rt"><div class="lawicon">${ic(L.icon)}</div><div><h3>${esc(L.name)}</h3><p class="law">${esc(L.id)}</p></div></div><p class="full">${esc(L.full)}</p><div><span class="pill p-${s}">${k==='fi'?'With NIS2: ':''}${PILL[s]}</span></div><dl class="facts-list">${L.facts.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join('')}${L.to?`<dt>Report to</dt><dd>${esc(L.to)}${k==='nis2'?'. '+NIS2CH:''}</dd>`:''}</dl><a class="src" href="${L.url}" target="_blank" rel="noopener">${ic('ext','sm')}Full text</a></div><div class="arts"><div class="eyebrow">Articles this tool uses</div>${used[k].map(rk=>{const r=REF[rk];return `<details><summary><span class="cite">${esc(r.cite)}</span><span class="used">${esc(r.use)}</span></summary><div class="body">${quote(rk)}</div></details>`}).join('')}</div></article>`;
+    return `<article class="lawcard lc-${k}"><div class="meta"><div class="rt"><div class="lawicon">${ic(L.icon)}</div><div><h3>${esc(L.name)}</h3><p class="law">${esc(L.id)}</p></div></div><p class="full">${esc(L.full)}</p>${s?`<div><span class="pill p-${s}">${k==='fi'?'With NIS2: ':''}${PILL[s]}</span></div>`:''}<dl class="facts-list">${L.facts.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join('')}${L.to?`<dt>Report to</dt><dd>${esc(L.to)}${k==='nis2'?'. '+NIS2CH:''}</dd>`:''}</dl><a class="src" href="${L.url}" target="_blank" rel="noopener">${ic('ext','sm')}Full text</a></div><div class="arts"><div class="eyebrow">Articles this tool uses</div>${used[k].map(rk=>{const r=REF[rk];return `<details><summary><span class="cite">${esc(r.cite)}</span><span class="used">${esc(r.use)}</span></summary><div class="body">${quote(rk)}</div></details>`}).join('')}</div></article>`;
   }).join(''):`<p class="sub">No law applies to the current answers.</p>`;
   $('#soon').innerHTML=SOON.map(x=>`<li>${ic(x.icon)}<div><b>${esc(x.t)}</b><br>${esc(x.d)} <a href="${x.url}" target="_blank" rel="noopener">Source</a></div></li>`).join('');
 }
 
 function setView(vw){
-  view=vw;$('#viewIncident').hidden=vw!=='incident';$('#viewRules').hidden=vw!=='rulebook';
-  $('#navIncident').setAttribute('aria-selected',vw==='incident');$('#navRules').setAttribute('aria-selected',vw==='rulebook');
+  view=vw;$('#viewList').hidden=vw!=='list';$('#viewIncident').hidden=vw!=='incident';$('#viewRules').hidden=vw!=='rulebook';
+  $('#navList').setAttribute('aria-selected',vw!=='rulebook');$('#navRules').setAttribute('aria-selected',vw==='rulebook');
   if(vw==='rulebook')renderRules();
 }
 function all(){
+  renderNavBadge();
+  if(!S||view==='list'){if(view==='list')renderList();if(view==='rulebook')renderRules();save();tick();return}
   const a=document.activeElement,fid=a&&a!==document.body&&a.id?a.id:null;
   const R=evaluate();
   renderBar(R);renderStart();renderTriage();renderReport(R);renderClose(R);renderPhases(R);
@@ -1372,17 +1532,6 @@ function copy(text,el,status){
   try{navigator.clipboard.writeText(text).then(ok,fail)}catch(e){fail()}
 }
 
-/* Replacing the incident: confirm in the page, keep the old one in the archive first. */
-let pendingAct=null;
-function askReplace(act){
-  $('#menu').open=false;
-  if(S.example){act();return}
-  pendingAct=act;$('#confirmBar').hidden=false;window.scrollTo(0,0);$('#cfNo').focus();
-}
-function freshView(){sentOpen=false;$('#reportMsg').textContent='';setView('incident');renderStart(true);all();window.scrollTo(0,0)}
-function loadExample(){S=example();freshView()}
-function newIncident(){S=blank();freshView();$('#f_name').focus()}
-
 /* ---------- Events ---------- */
 const TIMED={aware:'Awareness time',fixdate:'Fix or mitigation date',ended:'Handling ended date',mdrAware:'MDR awareness time'};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-help]');if(b){e.preventDefault();openHelp(b.dataset.help)}
@@ -1391,8 +1540,21 @@ $('#dClose').addEventListener('click',closeHelp);
 $('#shade').addEventListener('click',closeHelp);
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('#drawer').hidden)closeHelp();else if($('#menu').open){$('#menu').open=false;$('#menu summary').focus()}});
 $('#dRules').addEventListener('click',()=>{closeHelp();setView('rulebook');window.scrollTo(0,0)});
-document.querySelector('.nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)setView(b.dataset.view)});
-document.querySelector('.filter').addEventListener('click',e=>{const b=e.target.closest('[data-flt]');if(!b)return;flt=b.dataset.flt;document.querySelectorAll('.filter button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderRules()});
+/* "Incidents" goes back to the open incident when you come from the Rulebook, otherwise to the list. */
+document.querySelector('.nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(!b)return;
+  if(b.dataset.view==='rulebook'){setView('rulebook');return}
+  if(view==='rulebook'&&S){setView('incident');all();return}
+  openList()});
+document.querySelector('.filter').addEventListener('click',e=>{const b=e.target.closest('[data-flt]');if(!b||b.disabled)return;flt=b.dataset.flt;document.querySelectorAll('.filter button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderRules()});
+
+/* Incidents list */
+$('#newInc').addEventListener('click',newIncident);
+$('#btnNew').addEventListener('click',newIncident);
+$('#btnExample').addEventListener('click',loadExamples);
+['#openList','#histList'].forEach(s=>$(s).addEventListener('click',e=>{const b=e.target.closest('[data-inc]');if(b)openInc(b.dataset.inc)}));
+$('#copyAll').addEventListener('click',()=>{const txt=JSON.stringify({app:'Incident Clock',exported:new Date().toISOString(),incidents:INC},null,2);$('#allJsonOut').textContent=txt;copy(txt,$('#allJsonOut'),$('#allJsonStatus'))});
+$('#backList').addEventListener('click',openList);
+$('#reopenBtn').addEventListener('click',reopenInc);
 
 $('#barNext').addEventListener('click',()=>{const id=$('#barNext').dataset.open;if(id)openStep(id)});
 $('#phases').addEventListener('click',e=>{const b=e.target.closest('.ph-btn');if(!b)return;const p=+b.dataset.p;if(!unlocked(p)||S.phase===p)return;openPhase(p)});
@@ -1462,17 +1624,18 @@ $('#closeOpen').addEventListener('click',e=>{const b=e.target.closest('[data-got
 $('#noteForm').addEventListener('submit',e=>{e.preventDefault();const x=$('#logNote').value.trim();if(!x)return;log(x);$('#logNote').value='';edited();all();$('#logStatus').textContent='Note added.'});
 $('#copyLog').addEventListener('click',()=>{const txt=S.log.map(e=>`${fmtLog(new Date(e.t))}  ${e.x}`).join('\n');copy(txt,$('#log'),$('#logStatus'))});
 $('#copyJson').addEventListener('click',()=>{const txt=JSON.stringify(S,null,2);$('#jsonOut').textContent=txt;copy(txt,$('#jsonOut'),$('#jsonStatus'))});
-$('#archList').addEventListener('click',e=>{const b=e.target.closest('[data-arch]');if(!b)return;const ent=ARCH[+b.dataset.arch];if(!ent)return;
-  askReplace(()=>{const d=migrate(JSON.parse(JSON.stringify(ent.data)));ARCH=ARCH.filter(x=>x!==ent);saveArch();if(!d)return;S=d;log('Incident reopened from Earlier incidents');freshView()})});
+/* Close and delete, with in-page confirmation */
+$('#closeBtn').addEventListener('click',askClose);
+$('#closeYes').addEventListener('click',()=>{const x=$('#closeReason').value.trim();if(!x){$('#closeCfText').querySelector('b').textContent='Write a short reason first.';$('#closeReason').focus();return}closeInc(x)});
+$('#closeReason').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#closeYes').click()}});
+$('#closeNo').addEventListener('click',()=>{$('#closeConfirm').hidden=true;$('#closeBtn').focus()});
+let delFrom=null;
+['#delAsk','#delAsk2'].forEach(s=>$(s).addEventListener('click',()=>{delFrom=s;$('#closeConfirm').hidden=true;$('#delConfirm').hidden=false;$('#delConfirm').scrollIntoView({block:'center'});$('#delNo').focus({preventScroll:true})}));
+$('#delNo').addEventListener('click',()=>{$('#delConfirm').hidden=true;const b=delFrom&&$(delFrom);if(b&&!b.closest('[hidden]'))b.focus()});
+$('#delYes').addEventListener('click',deleteInc);
 
-/* Menu and replace confirmation */
-$('#btnExample').addEventListener('click',()=>askReplace(loadExample));
-$('#btnNew').addEventListener('click',()=>askReplace(newIncident));
-$('#cfYes').addEventListener('click',()=>{const act=pendingAct;pendingAct=null;$('#confirmBar').hidden=true;archive(S);if(act)act()});
-$('#cfNo').addEventListener('click',()=>{pendingAct=null;$('#confirmBar').hidden=true;$('#menu summary').focus()});
-
-renderStart(true);all();
-if(location.hash==='#rulebook')setView('rulebook');
+if(location.hash==='#rulebook')setView('rulebook');else setView('list');
+all();
 setInterval(tick,1000);
 })();
 </script>
